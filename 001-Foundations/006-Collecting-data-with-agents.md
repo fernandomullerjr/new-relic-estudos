@@ -31,3 +31,39 @@ APM agent - for server-side applications
 Browser agent - for browser applications 
 Mobile agent - for mobile applications
 Infrastructure agents - for hosts and on-host integrations
+
+
+
+
+
+ The browser agent is a line of JavaScript that runs in the client browser. You can manually place that code yourself or ask the APM agent to do it.
+
+
+
+
+
+True or False: In order to instrument a system that hosts your application, you need to have code level access to that system.
+
+True
+Incorrectly selected
+
+False
+Incorrectly unselected
+
+Incorrect
+
+New Relic's On-Host-Integrations allow you to instrument hosts and services that you do not have code level access to.
+
+
+
+
+
+
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# RESUMO
+
+- New Relic consegue instrumentar hosts e serviços, mesmo sem ter acesso em level do código.
