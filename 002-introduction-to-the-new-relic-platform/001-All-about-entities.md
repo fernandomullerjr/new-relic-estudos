@@ -139,3 +139,9 @@ Although every item on this list is an entity in the NRU Demotron account, only 
 
 ## PENDENTE
 - Ver o video2
+
+
+
+
+
+- Ver o video2
