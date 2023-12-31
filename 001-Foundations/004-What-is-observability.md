@@ -26,3 +26,5 @@ git status
 # aula 4 - What is observability?
 
 Organizations that try to manage their systems with monitoring alone often find themselves attempting to manage tool sprawl (a segmented stack of different monitoring tools in the same application, causing the manual correlation of data) 
+
+Observability is a noun. It’s a type of approach that lets you ask why something is wrong. It provides the flexibility to dig into “unknown unknowns” on the fly.
