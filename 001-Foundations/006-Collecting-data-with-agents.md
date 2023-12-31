@@ -8,7 +8,7 @@
 
 git status
 git add .
-git commit -m "aula 5 - Telemetry data types"
+git commit -m "aula 6 - Collecting data with agents"
 eval $(ssh-agent -s)
 ssh-add /home/fernando/.ssh/chave-debian10-github
 git push
@@ -21,12 +21,13 @@ git status
 # ###################################################################################################################### 
 # ###################################################################################################################### 
 # ###################################################################################################################### 
-# Telemetry data types
+# Collecting data with agents
 
-The first step in observability requires gathering a lot of performance data, called telemetry data. There are four distinct types of telemetry data, summarized by the acronym “MELT”: Metrics, Events, Logs, and Traces. 
+Agents are integrated into a service through a process called instrumentation. 
 
-MELT
-Metrics
-Events
-Logs
-Traces. 
+At New Relic, this list of agents includes:
+
+APM agent - for server-side applications
+Browser agent - for browser applications 
+Mobile agent - for mobile applications
+Infrastructure agents - for hosts and on-host integrations
