@@ -43,7 +43,7 @@ In the video below, you'll be making an order on a sample application called Foo
         http://foodme.nru.to:8080/#/customer
 <http://foodme.nru.to:8080/#/customer>
 5482078545167852
-01/06/2024
+06/2024
 994
 
 Fried banana and ice cream 	$11.45 	$11.45 	
@@ -133,3 +133,6 @@ The New Relic Browser agent is a simple line of JavaScript code that can be inje
 - Abrir em outro navegador, logado na conta Training do NewRelic:
     https://onenr.io/07j9ab9lAjO
 <https://onenr.io/07j9ab9lAjO>
+
+
+- Analisando via F12, é possível verificar que existe um código Javascript do NewRelic, que contem o "NREUM", que é o "New Relic User Monitoring".
