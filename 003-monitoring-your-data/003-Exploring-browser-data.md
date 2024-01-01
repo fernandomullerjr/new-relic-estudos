@@ -229,6 +229,6 @@ Largest contentful paint measures the amount of time it takes for the largest el
 ## PENDENTE
 - Ler
 https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
-- Subir um TravelList via Docker no Debian:
+- Subir um TravelList via Docker no Debian. Ver sobre o .env, variaveis, etc
 https://dev.to/vumdao/5-minutes-travellist-laravel-demo-2fcj
 https://devpress.csdn.net/cicd/62eca52b19c509286f41776b.html
