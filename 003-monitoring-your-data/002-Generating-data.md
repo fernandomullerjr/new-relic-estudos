@@ -63,6 +63,63 @@ Your order ID is 1704126031180.
 
 
 
+- Analisando via F12
+https://bam.nr-data.net/jserrors/1/ab57e54f93?a=1048662011&sa=1&v=1223.PROD&t=Unnamed%20Transaction&rst=358933&ck=0&s=5eec82b5500bc0e9&ref=http://foodme.nru.to:8080/
+https://bam.nr-data.net/jserrors/1/ab57e54f93?a=1048662011&sa=1&v=1223.PROD&t=Unnamed%20Transaction&rst=358933&ck=0&s=5eec82b5500bc0e9&ref=http://foodme.nru.to:8080/
+
+
+- Analisando via F12, é possível verificar que existe um código Javascript do NewRelic, que contem o "NREUM", que é o "New Relic User Monitoring".
+
+~~~~javascript
+  ;window.NREUM||(NREUM={});NREUM.init={distributed_tracing:{enabled:true},privacy:{cookies_enabled:true},ajax:{deny_list:["bam.nr-data.net"]}};
+~~~~
+
+
+
+
+
+## LAB - GENERATING DATA
+
+1. Acessar http://foodme.nru.to:8080/#/customer e fazer um pedido.
+2. Checar o código fonte e identificar o NREUM.
+3. Acessar algum site qualquer e checar se ele usa o New Relic também.
+
+
+
+
+
+https://www.boticario.com.br/
+tem o NREUM
+
+
+
+
+
+
+## Check your knowledge
+
+ If you view the source of a webpage and see a script tag with the string `NREUM`, you know that the site is instrumented with the New Relic __________ agent
+
+Browser
+Correctly selected
+
+APM
+Correctly unselected
+
+Infrastructure
+Correctly unselected
+
+Mobile
+Correctly unselected
+
+OpenTelemetry
+Correctly unselected
+
+Correct
+
+The New Relic Browser agent is a simple line of JavaScript code that can be injected into the head of any website.
+
+
 
 # ###################################################################################################################### 
 # ###################################################################################################################### 
