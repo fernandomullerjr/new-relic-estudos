@@ -36,3 +36,43 @@ In the video below, you'll be making an order on a sample application called Foo
 <https://onenr.io/07j9ab9lAjO>
 
 
+
+
+
+
+        http://foodme.nru.to:8080/#/customer
+<http://foodme.nru.to:8080/#/customer>
+5482078545167852
+01/06/2024
+994
+
+Fried banana and ice cream 	$11.45 	$11.45 	
+	Pumpkin curry 	$6.95 	$83.40 	
+	Red curry with chicken 	$8.95 	$8.95 	
+		Total: 	$103.80 	
+
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1704126031180.
+
+
+
+
+
+
+
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# RESUMO
+
+- Logar via Firefox mesmo:
+        http://foodme.nru.to:8080/#/customer
+<http://foodme.nru.to:8080/#/customer>
+
+- Abrir em outro navegador, logado na conta Training do NewRelic:
+    https://onenr.io/07j9ab9lAjO
+<https://onenr.io/07j9ab9lAjO>
