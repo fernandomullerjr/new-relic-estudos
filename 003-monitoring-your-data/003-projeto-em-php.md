@@ -20,7 +20,6 @@ git status
 # Projeto em PHP - TravelList
 
 
-
 ## PENDENTE
 - Ler
 https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
@@ -483,3 +482,4 @@ fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-
 ## PENDENTE
 - Tratar erro no build.
 - Ver sobre usuario www-data vs sammy.
+- Subir APM na aplicação.
