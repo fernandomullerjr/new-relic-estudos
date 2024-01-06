@@ -483,3 +483,199 @@ fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-
 - Tratar erro no build.
 - Ver sobre usuario www-data vs sammy.
 - Subir APM na aplicação.
+
+
+
+
+
+## Dia 06/01/2024
+
+- Tratar erro no build.
+
+- Criando arquivo de conf para o supervisor:
+
+~~~~conf
+[supervisord]
+logfile=/dev/null             ; (main log file;default $CWD/supervisord.log)
+logfile_maxbytes=0            ; (max main logfile bytes b4 rotation;default 50MB)
+logfile_backups=0             ; (num of main logfile rotation backups;default 10)
+loglevel=info                 ; (log level;default info; others: debug,warn,trace)
+pidfile=/tmp/supervisord.pid  ; (supervisord pidfile;default supervisord.pid)
+nodaemon=true                 ; (start in foreground if true;default false)
+
+; the below section must remain in the config file for RPC
+; (supervisorctl/web interface) to work, additional interfaces may be
+; added by defining them in separate rpcinterface: sections
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl=unix:///var/run/supervisor.sock ; use a unix:// URL  for a unix socket
+
+[program:queue-worker]
+command=php artisan queue:work --daemon --delay=2 --sleep=1 --tries=3
+directory=/var/www
+redirect_stderr=true
+autostart=true
+autorestart=true
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+stdout_logfile=/dev/stdout
+~~~~
+
+
+
+
+$ docker-compose up -d
+
+$ docker-compose exec app ls -l
+
+
+- Buildando.
+- Novo erro:
+
+~~~~bash
+
+fernando@debian10x64:~$ cd ~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker-compose up -d
+Building app
+[+] Building 30.1s (4/4) FINISHED                                                                                                                                                                                                                                              docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.33kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => ERROR [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                30.0s
+ => ERROR [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                    30.0s
+------
+ > [internal] load metadata for docker.io/library/composer:latest:
+------
+------
+ > [internal] load metadata for docker.io/library/php:7.4-fpm:
+------
+Dockerfile:29
+--------------------
+  27 |
+  28 |     # Get latest Composer
+  29 | >>> COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+  30 |
+  31 |     # Create system user to run Composer and Artisan Commands
+--------------------
+ERROR: failed to solve: DeadlineExceeded: DeadlineExceeded: DeadlineExceeded: composer:latest: failed to do request: Head "https://registry-1.docker.io/v2/library/composer/manifests/latest": dial tcp 3.219.239.5:443: i/o timeout
+ERROR: Service 'app' failed to build : Build failed
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Mon 01 Jan 2024 05:07:08 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+
+~~~~
+
+
+
+
+- Tentando abrir:
+
+<https://registry-1.docker.io/v2/library/composer/manifests/latest>
+
+erro:
+
+~~~~json
+errors	
+0	
+code	"UNAUTHORIZED"
+message	"authentication required"
+detail	
+0	
+Type	"repository"
+Class	""
+Name	"library/composer"
+Action	"pull"
+~~~~
+
+
+
+https://hub.docker.com/_/composer/tags
+docker pull composer:2.6.6
+
+- Pull tá ok:
+
+~~~~bash
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker pull composer:latest
+latest: Pulling from library/composer
+661ff4d9561e: Already exists
+fbc99979baa6: Already exists
+47536423e079: Already exists
+1be6d4fc569f: Already exists
+0d66ed8a08e8: Already exists
+9c89438a3af7: Already exists
+032cda9d3dce: Already exists
+64252f72f3b7: Already exists
+74b1388b45b1: Already exists
+f96fa6dac320: Already exists
+594b5f962aa6: Already exists
+00dba960c1f9: Already exists
+4b1cd4fd5b56: Already exists
+8efd93cef2cf: Already exists
+Digest: sha256:1f88162f6d30fe394990edd298f181f66e8a4ba36d3e102213c2d4a8eb8654a5
+Status: Downloaded newer image for composer:latest
+docker.io/library/composer:latest
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Mon 01 Jan 2024 05:11:59 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+~~~~
+
+
+
+- Agora cessou erro do composer, novo erro:
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker-compose up -d
+Building app
+[+] Building 5.4s (9/22)                                                                                                                                                                                                                                                       docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.33kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           1.6s
+ => [auth] library/php:pull token for registry-1.docker.io                                                                                                                                                                                                                               0.0s
+ => CACHED [stage-0  1/15] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => [internal] load build context                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 8.29kB                                                                                                                                                                                                                                                      0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => ERROR [stage-0  2/15] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     supervisor                                                                                                                      3.7s
+------
+ > [stage-0  2/15] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     supervisor:
+1.606 Get:1 http://deb.debian.org/debian bullseye InRelease [116 kB]
+1.683 Get:2 http://deb.debian.org/debian-security bullseye-security InRelease [48.4 kB]
+1.725 Get:3 http://deb.debian.org/debian bullseye-updates InRelease [44.1 kB]
+1.780 Get:4 http://deb.debian.org/debian bullseye/main amd64 Packages [8062 kB]
+3.099 Reading package lists...
+3.537 E: Release file for http://deb.debian.org/debian-security/dists/bullseye-security/InRelease is not valid yet (invalid for another 4d 11h 23min 36s). Updates for this repository will not be applied.
+3.537 E: Release file for http://deb.debian.org/debian/dists/bullseye-updates/InRelease is not valid yet (invalid for another 4d 18h 3min 16s). Updates for this repository will not be applied.
+------
+Dockerfile:8
+--------------------
+   7 |     # Install system dependencies
+   8 | >>> RUN apt-get update && apt-get install -y \
+   9 | >>>     git \
+  10 | >>>     curl \
+  11 | >>>     libpng-dev \
+  12 | >>>     libonig-dev \
+  13 | >>>     libxml2-dev \
+  14 | >>>     zip \
+  15 | >>>     unzip \
+  16 | >>>     supervisor
+  17 |
+--------------------
+ERROR: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     supervisor" did not complete successfully: exit code: 100
+ERROR: Service 'app' failed to build : Build failed
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Mon 01 Jan 2024 05:12:27 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+~~~~
