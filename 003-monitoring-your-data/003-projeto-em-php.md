@@ -1362,3 +1362,127 @@ https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
 - Subir APM na aplicação Travellist.
 - Ler
 https://adevait.com/laravel/containerizing-laravel-applications-with-docker
+
+
+
+
+
+
+
+
+https://one.newrelic.com/marketplace/install-data-source?account=4301656&duration=1800000&filters=%28domain%20IN%20%28%27APM%27%2C%20%27EXT%27%29%20AND%20type%20IN%20%28%27APPLICATION%27%2C%20%27SERVICE%27%29%29&state=74a66fde-29c7-63ab-c911-dbdb51ab4b21
+
+Configure the New Relic PHP daemon Docker container
+
+First you will set up the PHP daemon container, then the PHP agent container.
+Step null:
+
+Start by creating a docker network for the daemon container and your application container to facilitate communication between the containers.
+docker network create newrelic-php
+
+Start the daemon container.
+docker run -d --name newrelic-php-daemon --network newrelic-php newrelic/php-daemon
+
+
+
+
+
+Configure your Docker container with the PHP agent
+
+This will involve setting up the daemon and PHP agent in different containers.
+1Step 1: Download the Docker file
+
+Note the location of where the file is downloaded. You will run the docker build command in the next step from the same directory.
+Dockerfile 18 lines 817.0 B
+
+ARG IMAGE_NAME
+
+FROM ${IMAGE_NAME}
+
+
+ARG NEW_RELIC_AGENT_VERSION
+
+ARG NEW_RELIC_LICENSE_KEY
+
+ARG NEW_RELIC_APPNAME
+
+
+RUN curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
+
+    && export NR_INSTALL_USE_CP_NOT_LN=1 \
+
+    && export NR_INSTALL_SILENT=1 \
+
+    && /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
+
+    && rm -rf /tmp/newrelic-php5-* /tmp/nrinstall*
+
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini \
+
+    -exec sed -i \
+
+        -e "s/REPLACE_WITH_REAL_KEY/${NEW_RELIC_LICENSE_KEY}/" \
+
+        -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"${NEW_RELIC_APPNAME}\"/" \
+
+        -e '$anewrelic.daemon.address="newrelic-php-daemon:31339"' {} \;
+
+2Step 2: Name your application
+
+You'll use this to find your data later, so choose a unique and meaningful name. See our docs
+
+.
+Name*
+Instrumenting your apps
+The following commands will configure all PHP apps on your host to report as a single APM entity. If you have multiple apps on your system and would prefer to configure them separately, edit the directories in the `find` commands below.
+3Step 3: Build and run the Docker image for the PHP agent.
+
+Enter the name of the Docker image you want to instrument, then run the docker build command below from the directory where you saved the Dockerfile.
+docker build -t "php_application_with_newrelic" --build-arg NEW_RELIC_AGENT_VERSION=10.10.0.1 --build-arg NEW_RELIC_LICENSE_KEY=507e1611db4dca13aa12069f8b0d500aFFFFNRAL --build-arg NEW_RELIC_APPNAME="PHP Application" --build-arg IMAGE_NAME="" .
+
+Run your new docker image. Docker will run your image connected to the newrelic-php network.
+docker run --network newrelic-php -p 8080:80 "php_application_with_newrelic"
+
+Note, you may need to alter the -p argument depending on how your image is configured
+
+
+- Exemplo de como ficaria:
+
+~~~~DOCKERFILE
+
+## NEWRELIC
+ARG IMAGE_NAME
+FROM ${IMAGE_NAME}
+
+ARG NEW_RELIC_AGENT_VERSION
+ARG NEW_RELIC_LICENSE_KEY
+ARG NEW_RELIC_APPNAME
+
+RUN curl -L https://download.newrelic.com/php_agent/archive/${NEW_RELIC_AGENT_VERSION}/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux.tar.gz | tar -C /tmp -zx \
+    && export NR_INSTALL_USE_CP_NOT_LN=1 \
+    && export NR_INSTALL_SILENT=1 \
+    && /tmp/newrelic-php5-${NEW_RELIC_AGENT_VERSION}-linux/newrelic-install install \
+    && rm -rf /tmp/newrelic-php5-* /tmp/nrinstall*
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini \
+    -exec sed -i \
+        -e "s/REPLACE_WITH_REAL_KEY/${NEW_RELIC_LICENSE_KEY}/" \
+        -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"${NEW_RELIC_APPNAME}\"/" \
+        -e '$anewrelic.daemon.address="newrelic-php-daemon:31339"' {} \;
+## FINAL DA INSTALAÇÃO DO NEW RELIC
+~~~~
+
+
+
+
+
+## PENDENTE
+- Ler
+https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
+- Subir APM na aplicação Travellist.
+- Ler
+https://adevait.com/laravel/containerizing-laravel-applications-with-docker
+
+
+
