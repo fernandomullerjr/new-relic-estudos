@@ -25,7 +25,8 @@ git status
 cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo
 docker-compose up -d
 docker-compose exec app ls -l
-
+http://localhost:8000
+http://192.168.136.128:8000
 
 ## PENDENTE
 - Ler
@@ -830,3 +831,534 @@ fernando@debian10x64:~$
 
 
 /usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+
+
+
+
+docker-compose exec app ls -l
+
+
+
+
+
+- Efetuados ajustes no Dockerfile e docker-compose, para deixar o www-data com permissões.
+- Segue com erro:
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker logs travellist-app
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Sat 06 Jan 2024 08:00:33 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+
+
+
+- Dockerfile ajustado:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    supervisor
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# setup redis
+RUN pecl install redis \
+        && docker-php-ext-enable redis
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+#RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user && \
+    chown -R $user:$user /var/www/
+
+
+# Set working directory
+WORKDIR /var/www
+ADD composer.json ./
+RUN composer install --prefer-dist --no-scripts --no-autoloader --no-interaction --no-ansi --optimize-autoloader
+
+
+COPY . /var/www/
+VOLUME /var/www/storage /var/www/bootstrap
+# Create system user to run Composer and Artisan Commands
+
+
+COPY docker/start.sh /usr/local/bin/start
+RUN chown -R $user: /var/www \
+    && chmod u+x /usr/local/bin/start
+COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
+
+RUN chmod 755 /usr/local/bin/start
+RUN chown -R $user:$user /usr/local/bin/start
+
+USER $user
+
+CMD ["/usr/local/bin/start"]
+~~~~
+
+
+
+
+
+
+- OK, agora containers subiram:
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                                         NAMES
+8cf4eb2da48c   travellist       "docker-php-entrypoi…"   17 seconds ago   Up 15 seconds   9000/tcp                                      travellist-scheduler
+3c47cfae817e   travellist       "docker-php-entrypoi…"   17 seconds ago   Up 15 seconds   9000/tcp                                      travellist-queue
+cdedb62b34b3   travellist       "docker-php-entrypoi…"   18 seconds ago   Up 17 seconds   9000/tcp                                      travellist-app
+7f612b588bfd   nginx:alpine     "/docker-entrypoint.…"   16 minutes ago   Up 17 seconds   0.0.0.0:8000->80/tcp, :::8000->80/tcp         travellist-nginx
+d6f5cf1f240b   redis:4-alpine   "docker-entrypoint.s…"   16 minutes ago   Up 17 seconds   0.0.0.0:16379->6379/tcp, :::16379->6379/tcp   travellist-redis
+26444659059d   mysql:5.7        "docker-entrypoint.s…"   16 minutes ago   Up 17 seconds   3306/tcp, 33060/tcp                           travellist-db
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Sat 06 Jan 2024 08:08:49 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+~~~~
+
+
+
+- Novo erro:
+
+~~~~bash
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ curl http://192.168.136.128:8000
+<br />
+<b>Warning</b>:  require(/var/www/public/../vendor/autoload.php): failed to open stream: No such file or directory in <b>/var/www/public/index.php</b> on line <b>24</b><br />
+<br />
+<b>Fatal error</b>:  require(): Failed opening required '/var/www/public/../vendor/autoload.php' (include_path='.:/usr/local/lib/php') in <b>/var/www/public/index.php</b> on line <b>24</b><br />
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ date
+Sat 06 Jan 2024 08:10:18 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+~~~~
+
+
+
+
+- Logs do NGINX retornam 200:
+
+~~~~bash
+2024/01/06 23:08:30 [notice] 1#1: start worker process 27
+2024/01/06 23:08:30 [notice] 1#1: start worker process 28
+192.168.136.1 - - [06/Jan/2024:23:10:07 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:10:07 +0000] "GET /favicon.ico HTTP/1.1" 200 0 "http://192.168.136.128:8000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+172.18.0.1 - - [06/Jan/2024:23:10:16 +0000] "GET / HTTP/1.1" 200 396 "-" "curl/7.64.0"
+172.18.0.1 - - [06/Jan/2024:23:11:24 +0000] "GET / HTTP/1.1" 200 396 "-" "curl/7.64.0"
+192.168.136.1 - - [06/Jan/2024:23:13:34 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:13:34 +0000] "GET /favicon.ico HTTP/1.1" 200 0 "http://192.168.136.128:8000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:13:34 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:13:34 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:13:35 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:15:44 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:15:44 +0000] "GET /favicon.ico HTTP/1.1" 200 0 "http://192.168.136.128:8000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:15:46 +0000] "GET / HTTP/1.1" 200 396 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+192.168.136.1 - - [06/Jan/2024:23:15:46 +0000] "GET /favicon.ico HTTP/1.1" 200 0 "http://192.168.136.128:8000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+- Subindo novo TravelList, com base no projeto original da Digital Ocean:
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
+
+
+- Mesmo erro:
+
+http://192.168.0.109:8000/
+
+~~~~bash
+Warning: require(/var/www/public/../vendor/autoload.php): failed to open stream: No such file or directory in /var/www/public/index.php on line 24
+
+Fatal error: require(): Failed opening required '/var/www/public/../vendor/autoload.php' (include_path='.:/usr/local/lib/php') in /var/www/public/index.php on line 24
+~~~~
+
+
+
+
+
+
+
+User
+erro ao tentar acessar pagina php 
+
+
+Warning: require(/var/www/public/../vendor/autoload.php): failed to open stream: No such file or directory in /var/www/public/index.php on line 24
+
+Fatal error: require(): Failed opening required '/var/www/public/../vendor/autoload.php' (include_path='.:/usr/local/lib/php') in /var/www/public/index.php on line 24
+ChatGPT
+
+O erro que você está enfrentando indica que o arquivo /var/www/public/../vendor/autoload.php não pode ser encontrado. Aqui estão algumas sugestões para resolver esse problema:
+
+    Verifique a existência do arquivo:
+    Certifique-se de que o arquivo autoload.php está presente no diretório especificado. Você pode verificar se o arquivo existe executando o seguinte comando no terminal:
+
+    bash
+
+ls /var/www/public/../vendor/autoload.php
+
+Se o arquivo não existir, pode ser necessário instalar as dependências do Composer novamente.
+
+Execute o Composer Install:
+Se você estiver usando o Composer para gerenciar as dependências do seu projeto, execute o seguinte comando na raiz do seu projeto para instalar as dependências:
+
+bash
+
+composer install
+
+Isso garantirá que o arquivo autoload.php e outras dependências sejam instalados corretamente.
+
+Verifique a Estrutura do Projeto:
+Certifique-se de que a estrutura do seu projeto esteja correta. O arquivo index.php parece estar na pasta /var/www/public/, e o autoload.php deve estar na pasta vendor dentro do diretório raiz do seu projeto.
+
+Verifique as Permissões de Arquivo:
+Certifique-se de que o usuário do servidor web tem permissões adequadas para ler os arquivos no seu projeto. Você pode precisar ajustar as permissões usando o comando chmod:
+
+bash
+
+chmod -R 755 /var/www/public
+
+Certifique-se de ajustar as permissões conforme necessário para o seu ambiente.
+
+Corrija o Caminho do Autoload:
+Se o seu projeto estiver em um ambiente diferente do esperado, ajuste o caminho do autoload.php no seu arquivo index.php para refletir a estrutura correta do projeto.
+
+Em vez de:
+
+php
+
+require('/var/www/public/../vendor/autoload.php');
+
+Você pode tentar:
+
+php
+
+    require(__DIR__ . '/../vendor/autoload.php');
+
+    Isso constrói o caminho de forma mais confiável, independentemente do diretório de trabalho atual.
+
+Após realizar essas verificações e correções, o problema deve ser resolvido. Se o erro persistir, revise seu código e verifique se não há problemas adicionais na lógica de inclusão de arquivos.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Executando composer install
+
+~~~~bash
+  - Installing theseer/tokenizer (1.1.3): Extracting archive
+  - Installing sebastian/code-unit-reverse-lookup (1.0.1): Extracting archive
+  - Installing phpunit/php-code-coverage (7.0.10): Extracting archive
+  - Installing doctrine/instantiator (1.3.0): Extracting archive
+  - Installing phpspec/prophecy (v1.10.3): Extracting archive
+  - Installing phar-io/version (2.0.1): Extracting archive
+  - Installing phar-io/manifest (1.0.3): Extracting archive
+  - Installing myclabs/deep-copy (1.9.5): Extracting archive
+  - Installing phpunit/phpunit (8.5.4): Extracting archive
+Package phpunit/php-token-stream is abandoned, you should avoid using it. No replacement was suggested.
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+Discovered Package: facade/ignition
+Discovered Package: fideloper/proxy
+Discovered Package: laravel/tinker
+Discovered Package: nesbot/carbon
+Discovered Package: nunomaduro/collision
+Package manifest generated successfully.
+35 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+sammy@802d153c93ce:/var/www$
+sammy@802d153c93ce:/var/www$
+sammy@802d153c93ce:/var/www$
+sammy@802d153c93ce:/var/www$
+
+~~~~
+
+
+
+
+
+
+- Agora ao acessar
+<http://192.168.0.109:8000/>
+
+resolveu problema.
+novo erro:
+
+~~~~bash
+RuntimeException
+No application encryption key has been specified.
+http://192.168.0.109:8000/
+Hide solutions
+Your app key is missing
+
+Generate your application encryption key using php artisan key:generate.
+Read more
+
+    Laravel installation
+~~~~
+
+
+
+
+
+
+
+- Logs do Laravel, erro:
+
+~~~~bash
+sammy@802d153c93ce:/var/www$ tail storage/logs/laravel.log -n 88
+[2024-01-06 23:25:57] dev.ERROR: No application encryption key has been specified. {"exception":"[object] (RuntimeException(code: 0): No application encryption key has been specified. at /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php:80)
+[stacktrace]
+#0 /var/www/vendor/laravel/framework/src/Illuminate/Support/helpers.php(433): Illuminate\\Encryption\\EncryptionServiceProvider->Illuminate\\Encryption\\{closure}('')
+#1 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(84): tap('', Object(Closure))
+#2 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(61): Illuminate\\Encryption\\EncryptionServiceProvider->key(Array)
+#3 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(33): Illuminate\\Encryption\\EncryptionServiceProvider->parseKey(Array)
+#4 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(801): Illuminate\\Encryption\\EncryptionServiceProvider->Illuminate\\Encryption\\{closure}(Object(Illuminate\\Foundation\\Application), Array)
+#5 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(687): Illuminate\\Container\\Container->build(Object(Closure))
+#6 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(796): Illuminate\\Container\\Container->resolve('encrypter', Array, true)
+#7 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(633): Illuminate\\Foundation\\Application->resolve('encrypter', Array)
+#8 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(781): Illuminate\\Container\\Container->make('encrypter', Array)
+#9 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(955): Illuminate\\Foundation\\Application->make('encrypter')
+#10 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(875): Illuminate\\Container\\Container->resolveClass(Object(ReflectionParameter))
+#11 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(836): Illuminate\\Container\\Container->resolveDependencies(Array)
+#12 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(687): Illuminate\\Container\\Container->build('App\\\\Http\\\\Middle...')
+#13 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(796): Illuminate\\Container\\Container->resolve('App\\\\Http\\\\Middle...', Array, true)
+#14 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(633): Illuminate\\Foundation\\Application->resolve('App\\\\Http\\\\Middle...', Array)
+#15 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(781): Illuminate\\Container\\Container->make('App\\\\Http\\\\Middle...', Array)
+#16 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(156): Illuminate\\Foundation\\Application->make('App\\\\Http\\\\Middle...')
+#17 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(103): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#18 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(687): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#19 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(662): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#20 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(628): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#21 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(617): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#22 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(165): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#23 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(128): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#25 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(167): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(167): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#29 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(167): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#30 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/CheckForMaintenanceMode.php(63): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#31 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(167): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 /var/www/vendor/fideloper/proxy/src/TrustProxies.php(57): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(167): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#34 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(103): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#35 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(140): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#36 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(109): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#37 /var/www/public/index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#38 {main}
+"}
+[2024-01-06 23:25:57] dev.ERROR: No application encryption key has been specified. {"exception":"[object] (RuntimeException(code: 0): No application encryption key has been specified. at /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php:80)
+[stacktrace]
+#0 /var/www/vendor/laravel/framework/src/Illuminate/Support/helpers.php(433): Illuminate\\Encryption\\EncryptionServiceProvider->Illuminate\\Encryption\\{closure}('')
+#1 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(84): tap('', Object(Closure))
+#2 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(61): Illuminate\\Encryption\\EncryptionServiceProvider->key(Array)
+#3 /var/www/vendor/laravel/framework/src/Illuminate/Encryption/EncryptionServiceProvider.php(33): Illuminate\\Encryption\\EncryptionServiceProvider->parseKey(Array)
+#4 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(801): Illuminate\\Encryption\\EncryptionServiceProvider->Illuminate\\Encryption\\{closure}(Object(Illuminate\\Foundation\\Application), Array)
+#5 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(687): Illuminate\\Container\\Container->build(Object(Closure))
+#6 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(796): Illuminate\\Container\\Container->resolve('encrypter', Array, true)
+#7 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(633): Illuminate\\Foundation\\Application->resolve('encrypter', Array)
+#8 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(781): Illuminate\\Container\\Container->make('encrypter', Array)
+#9 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(955): Illuminate\\Foundation\\Application->make('encrypter')
+#10 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(875): Illuminate\\Container\\Container->resolveClass(Object(ReflectionParameter))
+#11 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(836): Illuminate\\Container\\Container->resolveDependencies(Array)
+#12 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(687): Illuminate\\Container\\Container->build('App\\\\Http\\\\Middle...')
+#13 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(796): Illuminate\\Container\\Container->resolve('App\\\\Http\\\\Middle...', Array, true)
+#14 /var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php(633): Illuminate\\Foundation\\Application->resolve('App\\\\Http\\\\Middle...', Array)
+#15 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(781): Illuminate\\Container\\Container->make('App\\\\Http\\\\Middle...', Array)
+#16 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(204): Illuminate\\Foundation\\Application->make('App\\\\Http\\\\Middle...')
+#17 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(178): Illuminate\\Foundation\\Http\\Kernel->terminateMiddleware(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\Response))
+#18 /var/www/public/index.php(60): Illuminate\\Foundation\\Http\\Kernel->terminate(Object(Illuminate\\Http\\Request), Object(Illuminate\\Http\\Response))
+#19 {main}
+"}
+sammy@802d153c93ce:/var/www$
+~~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RuntimeException
+No application encryption key has been specified.
+http://192.168.0.109:8000/
+Hide solutions
+Your app key is missing
+
+Generate your application encryption key using php artisan key:generate.
+ChatGPT
+
+O erro que você está enfrentando indica que a chave de criptografia da aplicação não foi configurada no Laravel. Para resolver isso, você precisa gerar uma chave de aplicativo usando o comando php artisan key:generate. Aqui estão os passos para corrigir o problema:
+
+    Abra um terminal na raiz do seu projeto Laravel.
+
+    Execute o seguinte comando para gerar a chave de aplicativo:
+
+    bash
+
+php artisan key:generate
+
+Isso gerará uma nova chave de aplicativo e a colocará no arquivo .env do seu projeto.
+
+Após executar o comando, verifique o arquivo .env na raiz do seu projeto Laravel. Deve haver uma linha semelhante a esta:
+
+dotenv
+
+APP_KEY=base64:your_generated_key_here
+
+Certifique-se de que a chave de aplicativo foi gerada corretamente e está presente no arquivo .env.
+
+Se a chave ainda não estiver presente no arquivo .env ou se você quiser regenerá-la, execute novamente o comando php artisan key:generate.
+
+Após gerar a chave de aplicativo, limpe o cache do Laravel para garantir que as alterações sejam refletidas. Execute o seguinte comando:
+
+bash
+
+    php artisan cache:clear
+
+    Este comando limpa o cache da aplicação Laravel.
+
+    Reinicie o servidor de desenvolvimento (se estiver usando o servidor embutido do Laravel) ou o servidor web que você está usando.
+
+Após seguir esses passos, o erro relacionado à chave de criptografia da aplicação deve ser resolvido. Certifique-se de sempre gerar a chave de aplicativo quando iniciar um novo projeto Laravel ou ao clonar um projeto existente.
+
+
+
+
+
+
+
+
+
+
+
+- Ajustado
+
+sammy@802d153c93ce:/var/www$ php artisan key:generate
+Application key set successfully.
+sammy@802d153c93ce:/var/www$ cat .env
+APP_NAME=Travellist
+APP_ENV=dev
+APP_KEY=base64:dTwxwHY1lXdo1xPUeDnB/jZJdGYPsFvh+ErvBLTNQVQ=
+
+sammy@802d153c93ce:/var/www$ php artisan cache:clear
+Application cache cleared!
+sammy@802d153c93ce:/var/www$
+sammy@802d153c93ce:/var/www$
+
+
+
+
+
+
+
+
+
+
+
+
+## PENDENTE
+
+- Ajustar Dockerfile para efetuar composer install
+- Adicionar APP_KEY ao .env.example
+
+
+
+
+
+
+
+
+
+- Ajustar Dockerfile para efetuar composer install
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/Dockerfile
+
+~~~~DOCKERFILE
+# Instale as dependências usando o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --no-scripts --no-suggest
+~~~~
+
+
+
+
+- Adicionar APP_KEY ao .env.example
+ajustado:
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/.env.example
+
+
+
+
+
+
+
+
+## PENDENTE
+- Ler
+https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
+- Subir APM na aplicação Travellist.
+- Ler
+https://adevait.com/laravel/containerizing-laravel-applications-with-docker
