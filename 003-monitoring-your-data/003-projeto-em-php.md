@@ -679,3 +679,68 @@ Mon 01 Jan 2024 05:12:27 PM -03
 fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
 
 ~~~~
+
+
+
+
+
+
+
+ERROR: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     supervisor" did not complete successfully: exit code: 100
+ERROR: Service 'app' failed to build : Build failed
+You have new mail in /var/mail/fernando
+
+
+
+
+DE:
+
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    supervisor
+
+
+
+
+- Testes com outro dockerfile, segue com erro:
+
+
+ERROR: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y \t\tlibfreetype-dev \t\tlibjpeg62-turbo-dev \t\tlibpng-dev \t&& docker-php-ext-configure gd --with-freetype --with-jpeg \t&& docker-php-ext-install -j$(nproc) gd" did not complete successfully: exit code: 100
+ERROR: Service 'app' failed to build : Build failed
+
+
+
+## PENDENTE
+- Tratar erro no build.
+        Ver erros:
+        3.650 E: Release file for http://deb.debian.org/debian-security/dists/bullseye-security/InRelease is not valid yet (invalid for another 4d 11h 7min 41s). Updates for this repository will not be applied.
+        3.650 E: Release file for http://deb.debian.org/debian/dists/bullseye-updates/InRelease is not valid yet (invalid for another 4d 17h 47min 21s). Updates for this repository will not be applied.
+- Ver sobre usuario www-data vs sammy.
+- Subir APM na aplicação.
+
+
+
+
+
+
+
+
+
+
+
+https://askubuntu.com/questions/1096930/sudo-apt-update-error-release-file-is-not-yet-valid
+
+This is a timezone issue. Try restarting your Docker host. It worked for me.
+
+
+
+sudo timedatectl set-time '15:17:00'
+sudo timedatectl set-time '2024-01-06'
