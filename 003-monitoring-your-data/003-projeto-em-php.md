@@ -20,6 +20,13 @@ git status
 # Projeto em PHP - TravelList
 
 
+##### COMANDOS UTEIS
+
+cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo
+docker-compose up -d
+docker-compose exec app ls -l
+
+
 ## PENDENTE
 - Ler
 https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
@@ -740,7 +747,86 @@ https://askubuntu.com/questions/1096930/sudo-apt-update-error-release-file-is-no
 
 This is a timezone issue. Try restarting your Docker host. It worked for me.
 
-
-
 sudo timedatectl set-time '15:17:00'
 sudo timedatectl set-time '2024-01-06'
+
+
+
+
+
+
+
+cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo
+docker-compose up -d
+docker-compose exec app ls -l
+
+
+
+- Build OK
+
+porém ocorrem erros nos containers
+
+~~~~bash
+
+fernando@debian10x64:~$ docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS                            PORTS                                   NAMES
+6d51a640717d   travellist     "docker-php-entrypoi…"   21 minutes ago   Restarting (126) 26 seconds ago                                           travellist-scheduler
+74bccefbd243   travellist     "docker-php-entrypoi…"   21 minutes ago   Restarting (126) 26 seconds ago                                           travellist-app
+50813c60099e   mysql:5.7      "docker-entrypoint.s…"   21 minutes ago   Up 4 minutes                      3306/tcp, 33060/tcp                     travellist-db
+ae4a81738a69   nginx:alpine   "/docker-entrypoint.…"   21 minutes ago   Up 4 minutes                      0.0.0.0:8000->80/tcp, :::8000->80/tcp   travellist-nginx
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ docker logs travellist-app
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
+fernando@debian10x64:~$
+fernando@debian10x64:~$ date
+Sat 06 Jan 2024 07:38:00 PM -03
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+
+
+
+/usr/local/bin/docker-php-entrypoint: 9: exec: /usr/local/bin/start: Permission denied
