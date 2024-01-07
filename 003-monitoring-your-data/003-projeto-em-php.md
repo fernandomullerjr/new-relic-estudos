@@ -1740,3 +1740,424 @@ make: *** [Makefile:12: build-no-cache] Error 1
 fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
 
 ~~~~
+
+
+
+
+
+
+
+
+TOMEI O ERRO
+
+                                                                                                                                                                                                                                      0.0s
+ => [stage-0  2/15] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.2s
+ => ERROR [stage-0  3/15] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                        0.4s
+------
+ > [stage-0  3/15] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -:
+0.277 /bin/sh: 1: wget: not found
+0.333 E: gnupg, gnupg2 and gnupg1 do not seem to be installed, but one of them is required for this operation
+------
+Dockerfile:9
+--------------------
+   7 |     ## apm - new relic
+   8 |     RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+   9 | >>> RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+  10 |
+  11 |     # Install system dependencies
+--------------------
+ERROR: failed to solve: process "/bin/sh -c wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -" did not complete successfully: exit code: 255
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+
+
+
+ChatGPT
+
+O erro que você está enfrentando no seu Dockerfile indica que o comando wget não está disponível no sistema base da imagem Docker que você está utilizando. Além disso, parece que também está faltando o pacote GnuPG (gnupg), que é necessário para adicionar a chave GPG.
+
+Aqui estão algumas soluções possíveis:
+
+    Adicione o wget e o gnupg à Imagem:
+    Adicione comandos ao seu Dockerfile para instalar os pacotes necessários antes de executar o comando wget. Pode parecer algo assim:
+
+    dockerfile
+
+FROM sua-imagem-base
+
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list \
+    && wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+
+# Restante do seu Dockerfile...
+
+Lembre-se de substituir sua-imagem-base pela imagem base que você está utilizando.
+
+Use cURL em Vez de wget:
+Se preferir, você também pode usar o comando curl em vez de wget. No entanto, você precisará garantir que o curl esteja disponível na imagem base.
+
+dockerfile
+
+    FROM sua-imagem-base
+
+    RUN apt-get update \
+        && apt-get install -y curl gnupg \
+        && echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list \
+        && curl -sSL https://download.newrelic.com/548C16BF.gpg | apt-key add -
+
+    # Restante do seu Dockerfile...
+
+    Nesse caso, substitua sua-imagem-base pela imagem base que você está usando.
+
+Escolha a abordagem que melhor se adapta às suas necessidades e às configurações da sua imagem base. Certifique-se de ajustar o Dockerfile conforme necessário e teste para garantir que a solução resolva o problema.
+
+
+
+
+
+
+
+
+- Ajustado Dockerfile
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    wget \
+    gnupg
+
+## apm - new relic
+RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+RUN apt-get update -y
+
+## apm - new relic
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Instale as dependências usando o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --no-scripts --no-suggest
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+
+- Novo erro:
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 17.9s (14/22)                                                                                                                                                                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.63kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           3.2s
+ => [auth] library/php:pull token for registry-1.docker.io                                                                                                                                                                                                                               0.0s
+ => CACHED [stage-0  1/16] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/16] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        6.9s
+ => [stage-0  3/16] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.5s
+ => [stage-0  4/16] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.9s
+ => [stage-0  5/16] RUN apt-get update -y                                                                                                                                                                                                                                                1.3s
+ => [stage-0  6/16] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              4.1s
+ => [stage-0  7/16] RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install                                                                                                                                                                                                          0.6s
+ => ERROR [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/" {} ; 2>/dev/null                       0.3s
+------
+ > [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/" {} ; 2>/dev/null:
+------
+Dockerfile:27
+--------------------
+  25 |     RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+  26 |     RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+  27 | >>> RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+  28 |
+  29 |     # Clear cache
+--------------------
+ERROR: failed to solve: process "/bin/sh -c find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/\" -e \"s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \\\"travellist-app-teste\\\"/\" {} \\; 2>/dev/null" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+ 
+ChatGPT
+
+O novo erro indica um problema ao tentar executar um comando sed dentro do seu Dockerfile. Parece que há uma interpretação incorreta dos caracteres de escape ou variáveis. Vamos corrigir isso.
+
+Atualmente, seu comando sed está assim:
+
+dockerfile
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+
+Vamos ajustá-lo para garantir que as variáveis sejam interpretadas corretamente:
+
+dockerfile
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} \; 2>/dev/null
+
+Mudanças realizadas:
+
+    Alterei as aspas duplas ao redor da expressão s/newrelic.appname.../ para aspas simples. Isso ajuda a evitar a interpretação incorreta de variáveis dentro da string.
+    Mantive as aspas duplas ao redor da expressão s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/ para garantir que a variável $NR_INSTALL_KEY seja substituída corretamente.
+
+Essas mudanças devem resolver o problema de interpretação e permitir que o comando sed seja executado corretamente no ambiente Docker. Certifique-se de testar o Dockerfile após essas alterações.
+
+
+
+
+
+- Ajustado:
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/Dockerfile
+
+- ERRO
+
+~~~~BASH
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 18.5s (13/21)                                                                                                                                                                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.62kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           2.1s
+ => CACHED [stage-0  1/16] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/16] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        6.9s
+ => [stage-0  3/16] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.4s
+ => [stage-0  4/16] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.7s
+ => [stage-0  5/16] RUN apt-get update -y                                                                                                                                                                                                                                                1.1s
+ => [stage-0  6/16] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              6.4s
+ => [stage-0  7/16] RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install                                                                                                                                                                                                          0.4s
+ => ERROR [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} ; 2>/dev/null                       0.5s
+------
+ > [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} ; 2>/dev/null:
+------
+Dockerfile:27
+--------------------
+  25 |     RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+  26 |     RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+  27 | >>> RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} \; 2>/dev/null
+  28 |
+  29 |     # Clear cache
+--------------------
+ERROR: failed to solve: process "/bin/sh -c find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/\" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/' {} \\; 2>/dev/null" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ date
+Sun 07 Jan 2024 12:28:00 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+1
+ChatGPT
+
+O erro parece indicar um problema com a execução do comando sed no seu Dockerfile. Vamos ajustar a forma como a variável de ambiente $NR_INSTALL_KEY é passada para o comando sed para evitar problemas de interpretação. Em alguns casos, variáveis de ambiente podem não ser interpretadas corretamente dentro de aspas duplas.
+
+Ajuste a linha problemática no seu Dockerfile para o seguinte:
+
+dockerfile
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} \; 2>/dev/null
+
+As mudanças realizadas incluem substituir $NR_INSTALL_KEY por ${NR_INSTALL_KEY} para garantir uma interpolação adequada da variável de ambiente dentro da string do Dockerfile.
+
+Depois de fazer essa modificação, tente construir novamente sua imagem Docker. Isso deve resolver o problema de execução do sed.
+
+
+
+- Ajustado
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/Dockerfile
+
+- ERRO
+
+~~~~BASH
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 20.1s (14/22)                                                                                                                                                                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.63kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           4.5s
+ => [auth] library/php:pull token for registry-1.docker.io                                                                                                                                                                                                                               0.0s
+ => CACHED [stage-0  1/16] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/16] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        6.9s
+ => [stage-0  3/16] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.5s
+ => [stage-0  4/16] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.7s
+ => [stage-0  5/16] RUN apt-get update -y                                                                                                                                                                                                                                                1.1s
+ => [stage-0  6/16] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              5.4s
+ => [stage-0  7/16] RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install                                                                                                                                                                                                          0.5s
+ => ERROR [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} ; 2>/dev/null                     0.3s
+------
+ > [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} ; 2>/dev/null:
+------
+Dockerfile:27
+--------------------
+  25 |     RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+  26 |     RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+  27 | >>> RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/' {} \; 2>/dev/null
+  28 |
+  29 |     # Clear cache
+--------------------
+ERROR: failed to solve: process "/bin/sh -c find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/\" -e 's/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/' {} \\; 2>/dev/null" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ date
+Sun 07 Jan 2024 12:30:03 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+
+https://forum.newrelic.com/s/hubtopic/aAX8W0000008cGkWAI/new-relic-agent-installation-failed-inside-docker-debian-container
+
+
+
+
+
+
+
+
+
+
+
+
+1
+ChatGPT
+
+Peço desculpas pelo inconveniente. Parece que ainda há um problema com a execução do comando sed no seu Dockerfile. Vamos tentar mais uma abordagem para resolver isso.
+
+Modifique a linha problemática no Dockerfile da seguinte maneira:
+
+dockerfile
+
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s|REPLACE_WITH_REAL_KEY|${NR_INSTALL_KEY}|" -e 's|newrelic.appname[[:space:]]=[[:space:]].*|newrelic.appname = "travellist-app-teste"|' {} \; 2>/dev/null
+
+Nesta modificação, troquei as barras (/) no comando sed por barras verticais (|). Isso ajuda a evitar problemas quando você está usando barras (/) na substituição.
+
+Tente construir sua imagem Docker novamente após esta modificação e veja se o problema persiste. Se o problema ainda continuar, podemos explorar outras alternativas.
+
+
+- Ajustado
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/Dockerfile
+
+
+
+- ERRO
+
+~~~~BASH
+te
+Sun 07 Jan 2024 12:30:03 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 18.7s (14/22)                                                                                                                                                                                                                                                     docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.63kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           3.2s
+ => [auth] library/php:pull token for registry-1.docker.io                                                                                                                                                                                                                               0.0s
+ => CACHED [stage-0  1/16] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/16] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        5.9s
+ => [stage-0  3/16] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.4s
+ => [stage-0  4/16] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.7s
+ => [stage-0  5/16] RUN apt-get update -y                                                                                                                                                                                                                                                1.1s
+ => [stage-0  6/16] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              6.4s
+ => [stage-0  7/16] RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install                                                                                                                                                                                                          0.5s
+ => ERROR [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s|REPLACE_WITH_REAL_KEY|${NR_INSTALL_KEY}|" -e 's|newrelic.appname[[:space:]]=[[:space:]].*|newrelic.appname = "travellist-app-teste"|' {} ; 2>/dev/null                     0.3s
+------
+ > [stage-0  8/16] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s|REPLACE_WITH_REAL_KEY|${NR_INSTALL_KEY}|" -e 's|newrelic.appname[[:space:]]=[[:space:]].*|newrelic.appname = "travellist-app-teste"|' {} ; 2>/dev/null:
+------
+Dockerfile:27
+--------------------
+  25 |     RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+  26 |     RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+  27 | >>> RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s|REPLACE_WITH_REAL_KEY|${NR_INSTALL_KEY}|" -e 's|newrelic.appname[[:space:]]=[[:space:]].*|newrelic.appname = "travellist-app-teste"|' {} \; 2>/dev/null
+  28 |
+  29 |     # Clear cache
+--------------------
+ERROR: failed to solve: process "/bin/sh -c find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s|REPLACE_WITH_REAL_KEY|${NR_INSTALL_KEY}|\" -e 's|newrelic.appname[[:space:]]=[[:space:]].*|newrelic.appname = \"travellist-app-teste\"|' {} \\; 2>/dev/null" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ date
+Sun 07 Jan 2024 12:35:20 PM -03
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
