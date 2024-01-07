@@ -2660,3 +2660,318 @@ https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
 - Ler
 https://adevait.com/laravel/containerizing-laravel-applications-with-docker
 
+
+
+
+
+
+
+
+
+
+
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$ ls /usr/local/etc/php/conf.d/
+docker-php-ext-bcmath.ini  docker-php-ext-exif.ini  docker-php-ext-gd.ini  docker-php-ext-pcntl.ini  docker-php-ext-pdo_mysql.ini  docker-php-ext-sodium.ini
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$
+sammy@98f438264081:/var/www$ php -i | grep -i dir
+Configure Command =>  './configure'  '--build=x86_64-linux-gnu' '--with-config-file-path=/usr/local/etc/php' '--with-config-file-scan-dir=/usr/local/etc/php/conf.d' '--enable-option-checking=fatal' '--with-mhash' '--with-pic' '--enable-ftp' '--enable-mbstring' '--enable-mysqlnd' '--with-password-argon2' '--with-sodium=shared' '--with-pdo-sqlite=/usr' '--with-sqlite3=/usr' '--with-curl' '--with-iconv' '--with-openssl' '--with-readline' '--with-zlib' '--disable-phpdbg' '--with-pear' '--with-libdir=lib/x86_64-linux-gnu' '--disable-cgi' '--enable-fpm' '--with-fpm-user=www-data' '--with-fpm-group=www-data' 'build_alias=x86_64-linux-gnu'
+Virtual Directory Support => disabled
+Scan this dir for additional .ini files => /usr/local/etc/php/conf.d
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+extension_dir => /usr/local/lib/php/extensions/no-debug-non-zts-20190902 => /usr/local/lib/php/extensions/no-debug-non-zts-20190902
+open_basedir => no value => no value
+sys_temp_dir => no value => no value
+upload_tmp_dir => no value => no value
+user_dir => no value => no value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+Classes => AppendIterator, ArrayIterator, ArrayObject, BadFunctionCallException, BadMethodCallException, CachingIterator, CallbackFilterIterator, DirectoryIterator, DomainException, EmptyIterator, FilesystemIterator, FilterIterator, GlobIterator, InfiniteIterator, InvalidArgumentException, IteratorIterator, LengthException, LimitIterator, LogicException, MultipleIterator, NoRewindIterator, OutOfBoundsException, OutOfRangeException, OverflowException, ParentIterator, RangeException, RecursiveArrayIterator, RecursiveCachingIterator, RecursiveCallbackFilterIterator, RecursiveDirectoryIterator, RecursiveFilterIterator, RecursiveIteratorIterator, RecursiveRegexIterator, RecursiveTreeIterator, RegexIterator, RuntimeException, SplDoublyLinkedList, SplFileInfo, SplFileObject, SplFixedArray, SplHeap, SplMinHeap, SplMaxHeap, SplObjectStorage, SplPriorityQueue, SplQueue, SplStack, SplTempFileObject, UnderflowException, UnexpectedValueException
+Directive => Local Value => Master Value
+sqlite3.extension_dir => no value => no value
+Directive => Local Value => Master Value
+Directive => Local Value => Master Value
+PHP_INI_DIR => /usr/local/etc/php
+$_SERVER['PHP_INI_DIR'] => /usr/local/etc/php
+$_ENV['PHP_INI_DIR'] => /usr/local/etc/php
+sammy@98f438264081:/var/www$
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Novo teste
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo/Dockerfile
+AJUSTADOS OS PATHS contidos no find.
+deixado apenas o path do conf do php "/usr/local/etc/php/conf.d"
+
+~~~~dockerfile
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    wget \
+    gnupg
+
+## apm - new relic
+RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+RUN apt-get update -y
+
+## apm - new relic
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+RUN NR_INSTALL_KEY=chave-nr newrelic-install install
+RUN find /usr/local/etc/php/conf.d -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+- Build OK, sem erros
+
+~~~~bash
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 46.7s (20/20) FINISHED                                                                                                                                                                                                                                            docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.46kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           0.5s
+ => CACHED [stage-0  1/14] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/14] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        7.4s
+ => [stage-0  3/14] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.4s
+ => [stage-0  4/14] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.6s
+ => [stage-0  5/14] RUN apt-get update -y                                                                                                                                                                                                                                                1.0s
+ => [stage-0  6/14] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              4.1s
+ => [stage-0  7/14] RUN NR_INSTALL_KEY=chave-nr newrelic-install install                                                                                                                                                                                 0.5s
+ => [stage-0  8/14] RUN find /usr/local/etc/php/conf.d -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/" {} ; 2>/dev/null       0.5s
+ => [stage-0  9/14] RUN apt-get clean && rm -rf /var/lib/apt/lists/*                                                                                                                                                                                                                     0.4s
+ => [stage-0 10/14] RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd                                                                                                                                                                                                  29.9s
+ => [stage-0 11/14] COPY --from=composer:latest /usr/bin/composer /usr/bin/composer                                                                                                                                                                                                      0.1s
+ => [stage-0 12/14] RUN useradd -G www-data,root -u 1000 -d /home/sammy sammy                                                                                                                                                                                                            0.3s
+ => [stage-0 13/14] RUN mkdir -p /home/sammy/.composer &&     chown -R sammy:sammy /home/sammy                                                                                                                                                                                           0.5s
+ => [stage-0 14/14] WORKDIR /var/www                                                                                                                                                                                                                                                     0.0s
+ => exporting to image                                                                                                                                                                                                                                                                   0.4s
+ => => exporting layers                                                                                                                                                                                                                                                                  0.4s
+ => => writing image sha256:ea9d412a54b121aa4fbb1bffbb2368f7257f7e42c5cfd350172b4328e83b150f                                                                                                                                                                                             0.0s
+ => => naming to docker.io/library/travellist                                                                                                                                                                                                                                            0.0s
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make up
+docker-compose up --detach
+Starting travellist-db    ... done
+Starting travellist-nginx ... done
+Recreating travellist-app ... done
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+de2daecd404d   travellist     "docker-php-entrypoi…"   4 seconds ago   Up 3 seconds   9000/tcp                                travellist-app
+e62315538563   mysql:5.7      "docker-entrypoint.s…"   24 hours ago    Up 3 seconds   3306/tcp, 33060/tcp                     travellist-db
+4797d39ce57b   nginx:alpine   "/docker-entrypoint.…"   24 hours ago    Up 3 seconds   0.0.0.0:8000->80/tcp, :::8000->80/tcp   travellist-nginx
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ date
+Sun 07 Jan 2024 08:22:11 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+
+
+
+
+- Dockerfile ajustado para utilizar variaveis:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    wget \
+    gnupg
+
+## apm - new relic
+RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+RUN apt-get update -y
+
+## apm - new relic
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+RUN NR_INSTALL_KEY=${NR_INSTALL_KEY} newrelic-install install
+RUN find /usr/local/etc/php/conf.d -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+
+
+- Teste
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 47.2s (21/21) FINISHED                                                                                                                                                                                                                                            docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.41kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           2.1s
+ => [auth] library/php:pull token for registry-1.docker.io                                                                                                                                                                                                                               0.0s
+ => CACHED [stage-0  1/14] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/14] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     zip     unzip     wget     gnupg                                                                                                                        7.3s
+ => [stage-0  3/14] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.4s
+ => [stage-0  4/14] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                              0.7s
+ => [stage-0  5/14] RUN apt-get update -y                                                                                                                                                                                                                                                1.1s
+ => [stage-0  6/14] RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5                                                                                                                                                                                              3.9s
+ => [stage-0  7/14] RUN NR_INSTALL_KEY=${NR_INSTALL_KEY} newrelic-install install                                                                                                                                                                                                        0.5s
+ => [stage-0  8/14] RUN find /usr/local/etc/php/conf.d -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-app-teste"/" {} ; 2>/dev/null                              0.3s
+ => [stage-0  9/14] RUN apt-get clean && rm -rf /var/lib/apt/lists/*                                                                                                                                                                                                                     0.3s
+ => [stage-0 10/14] RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd                                                                                                                                                                                                  29.3s
+ => [stage-0 11/14] COPY --from=composer:latest /usr/bin/composer /usr/bin/composer                                                                                                                                                                                                      0.1s
+ => [stage-0 12/14] RUN useradd -G www-data,root -u 1000 -d /home/sammy sammy                                                                                                                                                                                                            0.4s
+ => [stage-0 13/14] RUN mkdir -p /home/sammy/.composer &&     chown -R sammy:sammy /home/sammy                                                                                                                                                                                           0.3s
+ => [stage-0 14/14] WORKDIR /var/www                                                                                                                                                                                                                                                     0.0s
+ => exporting to image                                                                                                                                                                                                                                                                   0.4s
+ => => exporting layers                                                                                                                                                                                                                                                                  0.4s
+ => => writing image sha256:e06c9cac607765515d84fba405091b5114ba6c61d5cb3871e128d9b98e849340                                                                                                                                                                                             0.0s
+ => => naming to docker.io/library/travellist                                                                                                                                                                                                                                            0.0s
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make up
+docker-compose up --detach
+Starting travellist-nginx ... done
+Recreating travellist-app ... done
+Starting travellist-db    ... done
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                   NAMES
+4d61c3a38d60   travellist     "docker-php-entrypoi…"   3 seconds ago   Up 2 seconds   9000/tcp                                travellist-app
+e62315538563   mysql:5.7      "docker-entrypoint.s…"   24 hours ago    Up 2 seconds   3306/tcp, 33060/tcp                     travellist-db
+4797d39ce57b   nginx:alpine   "/docker-entrypoint.…"   24 hours ago    Up 2 seconds   0.0.0.0:8000->80/tcp, :::8000->80/tcp   travellist-nginx
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ date
+Sun 07 Jan 2024 08:40:40 PM -03
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+## PENDENTE
+- Subir APM na aplicação Travellist.
+        Debian do PHP-fpm apresenta falha com instalação do APM AGENT via "package manager" e/ou via "Tar distribution".
+        Via Package-Manager funcionou após ajuste no path do find, apesar do daemon estar off dentro do Container, apenas agent ok.
+        Avaliar métricas que o New Relic pega.
+- Criar v2, onde o diretório do php seja obtido via variável de ambiente, usando php -i, etc.
+- Criar boilerplate do TravelList + instalação do NewRelic Agent do PHP via Package Manager.
+- Verificar maneira de fazer o compose install e app key de forma automatizada, para primeira instalação do travellist. Ou, utilizar makefile apenas.
+- Ler
+https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
+- Ler
+https://adevait.com/laravel/containerizing-laravel-applications-with-docker
