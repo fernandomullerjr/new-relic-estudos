@@ -28,10 +28,16 @@ docker-compose exec app ls -l
 http://localhost:8000
 http://192.168.136.128:8000
 http://192.168.0.109:8000/
+make build-no-cache
 make up
 make stop
 curl http://192.168.0.109:8000/
 make exec-app
+
+
+- OBS
+primeira execução do projeto, precisa de um composer install
+também precisa da APP_KEY existente no .env
 
 
 ## PENDENTE
@@ -2161,3 +2167,496 @@ You have new mail in /var/mail/fernando
 fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
 
 ~~~~
+
+
+
+
+
+
+
+
+
+
+- Testes com este Dockerfile
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Set working directory
+WORKDIR /var/www
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+##########################################
+# Install Composer globally
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Adjust permissions to allow Composer to be run as a non-root user
+RUN chmod +x /usr/local/bin/composer
+
+# Install PHP extensions required by your application
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Copy only the composer files to leverage Docker cache
+COPY composer.json composer.lock /var/www/
+
+# Install project dependencies
+RUN composer install --no-interaction --no-scripts
+
+# Copy the rest of the application code
+COPY . /var/www/
+
+# Generate optimized autoload files after copying the code
+RUN composer dump-autoload --optimize
+
+# Adjust permissions for application files and directories
+RUN chown -R www-data:www-data /var/www/ \
+    && chmod -R 755 /var/www/storage
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user && \
+    mkdir -p /opt/composer && \
+    chown -R $user:$user /opt/composer
+
+USER $user
+
+~~~~
+
+
+
+
+
+
+
+
+- Erros:
+
+~~~~bash
+
+4.246   - Installing phpspec/prophecy (v1.10.3): Extracting archive
+4.246   - Installing phar-io/version (2.0.1): Extracting archive
+4.246   - Installing phar-io/manifest (1.0.3): Extracting archive
+4.246   - Installing myclabs/deep-copy (1.9.5): Extracting archive
+4.246   - Installing phpunit/phpunit (8.5.4): Extracting archive
+4.260   0/90 [>---------------------------]   0%
+4.390  35/90 [==========>-----------------]  38%
+4.498  59/90 [==================>---------]  65%
+4.601  84/90 [==========================>-]  93%
+4.649  90/90 [============================] 100%
+6.055 Package phpunit/php-token-stream is abandoned, you should avoid using it. No replacement was suggested.
+6.055 Generating optimized autoload files
+6.058
+6.058 In ClassMapGenerator.php line 129:
+6.058
+6.058   Could not scan for classes inside "database/seeds" which does not appear to
+6.058    be a file nor a folder
+6.058
+6.058
+6.058 install [--prefer-source] [--prefer-dist] [--prefer-install PREFER-INSTALL] [--dry-run] [--download-only] [--dev] [--no-suggest] [--no-dev] [--no-autoloader] [--no-progress] [--no-install] [--audit] [--audit-format AUDIT-FORMAT] [-v|vv|vvv|--verbose] [-o|--optimize-autoloader] [-a|--classmap-authoritative] [--apcu-autoloader] [--apcu-autoloader-prefix APCU-AUTOLOADER-PREFIX] [--ignore-platform-req IGNORE-PLATFORM-REQ] [--ignore-platform-reqs] [--] [<packages>...]
+6.058
+------
+Dockerfile:37
+--------------------
+  35 |
+  36 |     # Install project dependencies
+  37 | >>> RUN composer install --no-interaction --no-scripts
+  38 |
+  39 |     # Copy the rest of the application code
+--------------------
+ERROR: failed to solve: process "/bin/sh -c composer install --no-interaction --no-scripts" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT
+
+Para criar um Dockerfile que instala o PHP-FPM em uma imagem Debian e também instala o agente de APM do New Relic, você pode seguir um exemplo básico. Lembre-se de substituir as variáveis do New Relic pelos seus valores reais:
+
+Dockerfile
+
+# Use an official PHP-FPM base image with Debian
+FROM php:7.4-fpm
+
+# Instale as dependências necessárias
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Adicione o repositório do New Relic
+RUN curl -Ls https://download.newrelic.com/548C16BF.gpg | apt-key add -
+RUN echo "deb http://apt.newrelic.com/debian/ newrelic non-free" > /etc/apt/sources.list.d/newrelic.list
+
+# Instale o agente de APM do New Relic
+RUN apt-get update && apt-get install -y newrelic-php5
+
+# Configure o agente do New Relic (substitua com suas variáveis)
+RUN newrelic-install install
+RUN sed -i -e 's/"REPLACE_WITH_REAL_KEY"/sua-chave-de-api-do-New-Relic/' \
+           -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "Nome da sua aplicação"/' \
+           /etc/php/7.4/fpm/conf.d/newrelic.ini
+
+# ... (restante do seu Dockerfile)
+
+# Exponha a porta 9000 para o PHP-FPM
+EXPOSE 9000
+
+# CMD ou ENTRYPOINT para iniciar o PHP-FPM
+CMD ["php-fpm"]
+
+Certifique-se de substituir "sua-chave-de-api-do-New-Relic" e "Nome da sua aplicação" pelos valores reais da sua conta do New Relic. Este Dockerfile também assume que você já tenha um restante de configuração para a sua aplicação PHP.
+
+Lembre-se de adaptar o Dockerfile conforme necessário para atender aos requisitos específicos da sua aplicação.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Seguindo tutorial da New Relic via " package manager", ocorrem erros.
+
+- ERRO:
+
+~~~~BASH
+                                                                                                                                                                                            5.1s
+ => [stage-0  9/14] RUN NR_INSTALL_KEY=chave-de-instalacao newrelic-install install                                                                                                                                                                                 0.5s
+ => ERROR [stage-0 10/14] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-teste-lab"/" {} ; 2>/dev/  0.5s
+------
+ > [stage-0 10/14] RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-teste-lab"/" {} ; 2>/dev/null:
+------
+Dockerfile:35
+--------------------
+  33 |     # Configure o agente do New Relic (substitua com suas variáveis)
+  34 |     RUN NR_INSTALL_KEY=chave-de-instalacao newrelic-install install
+  35 | >>> RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-teste-lab\"/" {} \; 2>/dev/null
+  36 |     ################################################################################
+  37 |
+--------------------
+ERROR: failed to solve: process "/bin/sh -c find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s/REPLACE_WITH_REAL_KEY/chave-de-instalacao/\" -e \"s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \\\"travellist-teste-lab\\\"/\" {} \\; 2>/dev/null" did not complete successfully: exit code: 1
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+
+~~~~
+
+
+- Dockerfile que foi utilizado:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    gnupg
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+########################################## NEWRELIC
+# Adicione o repositório do New Relic
+RUN echo "deb http://apt.newrelic.com/debian/ newrelic non-free" > /etc/apt/sources.list.d/newrelic.list
+RUN curl -Ls https://download.newrelic.com/548C16BF.gpg | apt-key add -
+
+# Instale o agente de APM do New Relic
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+
+# Configure o agente do New Relic (substitua com suas variáveis)
+RUN NR_INSTALL_KEY=chave-de-instalacao newrelic-install install
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-teste-lab\"/" {} \; 2>/dev/null
+################################################################################
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+
+
+
+
+
+
+
+## PENDENTE
+- Subir APM na aplicação Travellist.
+        Debian do PHP-fpm apresenta falha com instalação do APM AGENT via "package manager".
+- Ler
+https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
+- Ler
+https://adevait.com/laravel/containerizing-laravel-applications-with-docker
+
+
+
+
+
+
+
+
+
+
+
+
+tar distribution
+
+curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz
+gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf -
+cd newrelic-php5-X.X.X.X-OS
+sudo NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install
+
+
+
+
+
+
+
+
+
+
+- Testando desta maneira:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    gzip \
+    gnupg
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+################################################################################ NEWRELIC
+# Adicione o repositório do New Relic
+RUN mkdir -p /var/www/build
+RUN cd /var/www/build && \
+curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && \
+gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf - && \
+cd newrelic-php5-X.X.X.X-OS && \
+NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install && \
+find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-teste\"/" {} \; 2>/dev/null
+################################################################################
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+- 
+
+
+- ERROS
+
+~~~~BASH
+                                                                                                                                                                                                       0.3s
+ => [stage-0  4/10] RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd                                                                                                                                                                                                  29.5s
+ => [stage-0  5/10] RUN mkdir -p /var/www/build                                                                                                                                                                                                                                          0.5s
+ => ERROR [stage-0  6/10] RUN cd /var/www/build && curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf - && cd newrelic-php5-X.X.X.X-OS && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTAL  0.6s
+------
+ > [stage-0  6/10] RUN cd /var/www/build && curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf - && cd newrelic-php5-X.X.X.X-OS && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install && find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = "travellist-teste"/" {} ; 2>/dev/null:
+0.517
+0.517 gzip: newrelic-php5-10.9.0.324-linux.tar.gz: not in gzip format
+0.517 tar: This does not look like a tar archive
+0.517 tar: Exiting with failure status due to previous errors
+------
+Dockerfile:28
+--------------------
+  27 |     RUN mkdir -p /var/www/build
+  28 | >>> RUN cd /var/www/build && \
+  29 | >>> curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && \
+  30 | >>> gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf - && \
+  31 | >>> cd newrelic-php5-X.X.X.X-OS && \
+  32 | >>> NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install && \
+  33 | >>> find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-teste\"/" {} \; 2>/dev/null
+  34 |     ################################################################################
+--------------------
+ERROR: failed to solve: process "/bin/sh -c cd /var/www/build && curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && gzip -dc newrelic-php5-10.9.0.324-linux.tar.gz | tar xf - && cd newrelic-php5-X.X.X.X-OS && NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install && find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e \"s/REPLACE_WITH_REAL_KEY/chave-de-instalacao-nr/\" -e \"s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \\\"travellist-teste\\\"/\" {} \\; 2>/dev/null" did not complete successfully: exit code: 2
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
+
+
+
+
+
+- Novo teste, usando tar
+
+~~~~DOCKERFILE
+
+################################################################################ NEWRELIC
+# Adicione o repositório do New Relic
+RUN mkdir -p /var/www/build
+RUN cd /var/www/build && \
+curl -s -O https://download.newrelic.com/php_agent/release/newrelic-php5-10.9.0.324-linux.tar.gz && \
+tar -xzvf newrelic-php5-10.9.0.324-linux.tar.gz && \
+cd newrelic-php5-10.9.0.324-linux && \
+NR_INSTALL_USE_CP_NOT_LN=1 NR_INSTALL_SILENT=true NR_INSTALL_KEY=chave-de-instalacao-nr ./newrelic-install install && \
+find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/chave-de-instalacao-nr/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-teste\"/" {} \; 2>/dev/null
+################################################################################
+~~~~
+
+
+
+- erro
+
+0.385 gzip: stdin: not in gzip format
+0.385 tar: Child returned status 1
+0.385 tar: Error is not recoverable: exiting now
+------
+Dockerfile:28
+--------------------
+
+
+
+
+- Efetuado rollback para o Dockerfile OK:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+
+
+
+
+
+## PENDENTE
+- Subir APM na aplicação Travellist.
+        Debian do PHP-fpm apresenta falha com instalação do APM AGENT via "package manager" e/ou via "Tar distribution".
+- Ler
+https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
+- Ler
+https://adevait.com/laravel/containerizing-laravel-applications-with-docker
+
