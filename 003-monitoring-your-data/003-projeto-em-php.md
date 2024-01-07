@@ -22,11 +22,17 @@ git status
 
 ##### COMANDOS UTEIS
 
-cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo
+cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
 docker-compose up -d
 docker-compose exec app ls -l
 http://localhost:8000
 http://192.168.136.128:8000
+http://192.168.0.109:8000/
+make up
+make stop
+curl http://192.168.0.109:8000/
+make exec-app
+
 
 ## PENDENTE
 - Ler
@@ -1439,7 +1445,7 @@ The following commands will configure all PHP apps on your host to report as a s
 3Step 3: Build and run the Docker image for the PHP agent.
 
 Enter the name of the Docker image you want to instrument, then run the docker build command below from the directory where you saved the Dockerfile.
-docker build -t "php_application_with_newrelic" --build-arg NEW_RELIC_AGENT_VERSION=10.10.0.1 --build-arg NEW_RELIC_LICENSE_KEY=507e1611db4dca13aa12069f8b0d500aFFFFNRAL --build-arg NEW_RELIC_APPNAME="PHP Application" --build-arg IMAGE_NAME="" .
+docker build -t "php_application_with_newrelic" --build-arg NEW_RELIC_AGENT_VERSION=10.10.0.1 --build-arg NEW_RELIC_LICENSE_KEY=  --build-arg NEW_RELIC_APPNAME="PHP Application" --build-arg IMAGE_NAME="" .
 
 Run your new docker image. Docker will run your image connected to the newrelic-php network.
 docker run --network newrelic-php -p 8080:80 "php_application_with_newrelic"
@@ -1477,12 +1483,109 @@ RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini \
 
 
 
+
+
+
+
+
+- Parando
+
+~~~~bash
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ make stop
+docker-compose stop
+Stopping travellist-app   ... done
+Stopping travellist-db    ... done
+Stopping travellist-nginx ... done
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS       NAMES
+3346e9339f04   newrelic/php-daemon   "sh /usr/bin/docker-…"   3 minutes ago   Up 3 minutes   31339/tcp   newrelic-php-daemon
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$ docker stop newrelic-php-daemon
+newrelic-php-daemon
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/travellist-laravel-demo$
+
+~~~~
+
+
+
+
+
 ## PENDENTE
 - Ler
 https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
 - Subir APM na aplicação Travellist.
 - Ler
 https://adevait.com/laravel/containerizing-laravel-applications-with-docker
+
+
+
+
+
+
+
+## Dia 07/01/2024
+
+- Subindo aplicação:
+cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
+make up
+curl http://192.168.0.109:8000/
+
+~~~~bash
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ pwd
+/home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+You have new mail in /var/mail/fernando
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make up
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED        STATUS          PORTS                                   NAMES
+802d153c93ce   travellist     "docker-php-entrypoi…"   15 hours ago   Up 18 seconds   9000/tcp                                travellist-app
+e62315538563   mysql:5.7      "docker-entrypoint.s…"   15 hours ago   Up 18 seconds   3306/tcp, 33060/tcp                     travellist-db
+4797d39ce57b   nginx:alpine   "/docker-entrypoint.…"   15 hours ago   Up 18 seconds   0.0.0.0:8000->80/tcp, :::8000->80/tcp   travellist-nginx
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ curl http://192.168.0.109:8000/ | head
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+<html>  0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+<head>
+    <link rel="stylesheet" href="/css/global.css" type="text/css">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Anton&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Hind&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
+    <script src="/js/map.js"></script>
+
+100  4113    0  4113    0     0   108k      0 --:--:-- --:--:-- --:--:--  108k
+(23) Failed writing body
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+~~~~
+
+
+
+
+
+- Subir APM na aplicação Travellist.
+
+<https://one.newrelic.com/marketplace/install-data-source?account=4301656&duration=1800000&filters=%28domain%20IN%20%28%27APM%27%2C%20%27EXT%27%29%20AND%20type%20IN%20%28%27APPLICATION%27%2C%20%27SERVICE%27%29%29&state=74a66fde-29c7-63ab-c911-dbdb51ab4b21>
+
+Select the package manager installed on your host
+
+We will streamline your installation process by providing executable commands that are specific to your environment
+apt
+yum
+2Step 2: Configure the New Relic apt repository
+echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | sudo tee /etc/apt/sources.list.d/newrelic.list
+3Step 3: Trust the New Relic GPG key
+wget -O- https://download.newrelic.com/548C16BF.gpg | sudo apt-key add -
+4Step 4: Update apt
+sudo apt-get update
 
 
 
