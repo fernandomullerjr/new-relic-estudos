@@ -1589,3 +1589,154 @@ sudo apt-get update
 
 
 
+
+
+
+
+
+- Dockerfile
+
+DE:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Instale as dependências usando o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --no-scripts --no-suggest
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+~~~~
+
+
+PARA:
+
+~~~~DOCKERFILE
+FROM php:7.4-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user
+ARG uid
+
+## apm - new relic
+RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
+
+## apm - new relic
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
+RUN NR_INSTALL_KEY=$NR_INSTALL_KEY newrelic-install install
+RUN find /etc /opt/etc /usr/local/etc -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/$NR_INSTALL_KEY/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Instale as dependências usando o Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-interaction --no-scripts --no-suggest
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+
+# Set working directory
+WORKDIR /var/www
+
+USER $user
+
+
+~~~~
+
+
+
+
+
+- ERRO 
+
+~~~~BASH
+
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$ make build-no-cache
+docker-compose build --no-cache
+db uses an image, skipping
+nginx uses an image, skipping
+Building app
+[+] Building 1.2s (8/20)                                                                                                                                                                                                                                                       docker:default
+ => [internal] load .dockerignore                                                                                                                                                                                                                                                        0.0s
+ => => transferring context: 88B                                                                                                                                                                                                                                                         0.0s
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                                                     0.0s
+ => => transferring dockerfile: 1.58kB                                                                                                                                                                                                                                                   0.0s
+ => [internal] load metadata for docker.io/library/composer:latest                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/php:7.4-fpm                                                                                                                                                                                                                           0.5s
+ => CACHED [stage-0  1/15] FROM docker.io/library/php:7.4-fpm@sha256:3ac7c8c74b2b047c7cb273469d74fc0d59b857aa44043e6ea6a0084372811d5b                                                                                                                                                    0.0s
+ => CACHED FROM docker.io/library/composer:latest                                                                                                                                                                                                                                        0.0s
+ => [stage-0  2/15] RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list                                                                                                                                                         0.2s
+ => ERROR [stage-0  3/15] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -                                                                                                                                                                                        0.4s
+------
+ > [stage-0  3/15] RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -:
+0.277 /bin/sh: 1: wget: not found
+0.333 E: gnupg, gnupg2 and gnupg1 do not seem to be installed, but one of them is required for this operation
+------
+Dockerfile:9
+--------------------
+   7 |     ## apm - new relic
+   8 |     RUN echo 'deb http://apt.newrelic.com/debian/ newrelic non-free' | tee /etc/apt/sources.list.d/newrelic.list
+   9 | >>> RUN wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -
+  10 |
+  11 |     # Install system dependencies
+--------------------
+ERROR: failed to solve: process "/bin/sh -c wget -O- https://download.newrelic.com/548C16BF.gpg | apt-key add -" did not complete successfully: exit code: 255
+ERROR: Service 'app' failed to build : Build failed
+make: *** [Makefile:12: build-no-cache] Error 1
+fernando@debian10x64:~/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo$
+
+~~~~
