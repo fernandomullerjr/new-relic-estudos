@@ -24,7 +24,7 @@ RUN apt-get update -y
 ## apm - new relic
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq install newrelic-php5
 RUN NR_INSTALL_KEY=${NR_INSTALL_KEY} newrelic-install install
-RUN find /usr/local/etc/php/conf.d -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
+RUN find ${NR_DIR_PHP} -type f -name newrelic.ini -exec sed -i -e "s/REPLACE_WITH_REAL_KEY/${NR_INSTALL_KEY}/" -e "s/newrelic.appname[[:space:]]=[[:space:]].*/newrelic.appname = \"travellist-app-teste\"/" {} \; 2>/dev/null
 
 
 # Clear cache
