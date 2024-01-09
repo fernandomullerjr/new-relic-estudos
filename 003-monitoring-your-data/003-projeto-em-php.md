@@ -35,10 +35,13 @@ make stop
 curl http://192.168.0.109:8000/
 make exec-app
 
-
 - OBS
 primeira execução do projeto, precisa de um composer install
 também precisa da APP_KEY existente no .env
+
+
+
+
 
 
 ## PENDENTE

@@ -232,3 +232,24 @@ https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
 - Subir um TravelList via Docker no Debian. Ver sobre o .env, variaveis, etc
 https://dev.to/vumdao/5-minutes-travellist-laravel-demo-2fcj
 https://devpress.csdn.net/cicd/62eca52b19c509286f41776b.html
+
+
+## Dia 09/01/2024
+
+
+
+
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# RESUMO
+
+- Em "All Entities", no menu "Browser / applications", é possível verificar métricas relacionadas a navegação:
+Largest Contentful Paint (LCP), , First Input Delay (FID) Interactivity, Cumulative Layout Shift (CLS) Visual stability, Slowest LCP by URL, Longest FID by URL, Largest CLS by URL
+https://one.newrelic.com/nr1-core/browser-entity-preview/browser-application-preview/MTYwNjg2MnxCUk9XU0VSfEFQUExJQ0FUSU9OfDQzMTkyMzEx?duration=1800000&state=63d8d78b-90ce-697c-db24-a8613c675aef
+
+- Clicando em "Errors (error inbox)", é possível ver detalhes sobre erros apenas.
+Clicando em algum dos "errorMessage" no bloco de "Total ocurrences", é possível verificar detalhes como "Key attributes", "Occurrence details", "Attributes", "Stack trace"
+https://one.newrelic.com/nr1-core/errors-inbox/entity-inbox/MTYwNjg2MnxCUk9XU0VSfEFQUExJQ0FUSU9OfDQzMTkyMzEx?duration=1800000&state=4ca5ae5f-1dc7-a7e2-5d94-eb58002c38e5
+
+- Na tela em "Errors (error inbox)", é possível filtrar por atributos ou valores.
