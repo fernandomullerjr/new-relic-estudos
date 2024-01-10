@@ -28,8 +28,8 @@ docker-compose exec app ls -l
 http://localhost:8000
 http://192.168.136.128:8000
 http://192.168.0.109:8000/
-cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
 make build-no-cache
+cd /home/fernando/cursos/new-relic/new-relic-estudos/aplicacoes/outra-app-2/travellist-laravel-demo
 make up
 make stop
 curl http://192.168.0.109:8000/
@@ -2977,11 +2977,11 @@ NR_DIR_PHP="/usr/local/etc/php/conf.d"
 
 
 ## PENDENTE
-- Subir APM na aplicação Travellist.
-        Debian do PHP-fpm apresenta falha com instalação do APM AGENT via "package manager" e/ou via "Tar distribution".
+-  APM na aplicação Travellist.
         Via Package-Manager funcionou após ajuste no path do find, apesar do daemon estar off dentro do Container, apenas agent ok.
         Avaliar métricas que o New Relic pega.
-- Criar boilerplate do TravelList + instalação do NewRelic Agent do PHP via Package Manager.
+        Revisar o funcionamento do APM no TravelList.
+- Criar boilerplate do TravelList + instalação do NewRelic Agent do PHP via Package Manager. Dockerfiles e particularidades.
 - Verificar maneira de fazer o compose install e app key de forma automatizada, para primeira instalação do travellist. Ou, utilizar makefile apenas.
 - Ler, https://docs.newrelic.com/docs/errors-inbox/errors-inbox/
 - Ler, https://adevait.com/laravel/containerizing-laravel-applications-with-docker
