@@ -253,3 +253,12 @@ Clicando em algum dos "errorMessage" no bloco de "Total ocurrences", é possíve
 https://one.newrelic.com/nr1-core/errors-inbox/entity-inbox/MTYwNjg2MnxCUk9XU0VSfEFQUExJQ0FUSU9OfDQzMTkyMzEx?duration=1800000&state=4ca5ae5f-1dc7-a7e2-5d94-eb58002c38e5
 
 - Na tela em "Errors (error inbox)", é possível filtrar por atributos ou valores.
+
+- no menu "Browser / applications", em "Session traces", é possível verificar detalhes de cada trace, como o Page Load, LCP, First Input Delay, etc.
+Além disto, é possível verificar o tempo levado em cada passo, até mesmo eventos do browser, como por exemplo:
+fetchStart
+< 1 ms
+redirectEnd
+< 1 ms
+redirectStart
+< 1 ms
