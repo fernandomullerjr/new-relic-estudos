@@ -44,3 +44,61 @@ APM Resources | New Relic Docs
 
 - Ao analisar um span de um Trace, é possível ver no span ofensor um simbolo como se fosse um relógio, para obter informações valiosas(exemplo: a duração deste span é 25% maior que os demais)
 span = periodo
+
+
+
+
+
+
+
+
+## PERGUNTAS
+A team continues to receive false issue notifications on their system. When they click into the issue tile and review incidents, they realize the set threshold for an alert is too low. Which of the following actions should they proceed with?
+
+Create a new alert condition
+
+Review and revise their current alert condition 
+
+
+Create a new incident 
+
+Review tags attached to an entity
+
+Incorrect
+
+When one or more incidents are triggered, they create an issue. Incidents are created from alert conditions, which are rules you define to notify you when an incident is triggered. To fix a false issue notification, you must review your current alert condition and make sure the thresholds set are accurate . 
+
+Which New Relic feature allows you to view a single transaction to understand where time was spent in the transaction?
+
+Errors inbox
+
+Vulnerability management
+
+Transaction tracing
+
+Distributed tracing
+
+Incorrect
+
+
+
+
+
+
+
+
+Review and revise their current alert condition 
+
+
+Correctly selected
+ 
+
+Correct
+
+When one or more incidents are triggered, they create an issue. Incidents are created from alert conditions, which are rules you define to notify you when an incident is triggered. To fix a false issue notification, you must review your current alert condition and make sure the thresholds set are accurate . 
+
+
+
+
+
+Transaction tracing
