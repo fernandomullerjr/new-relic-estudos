@@ -34,3 +34,13 @@ APM Resources | New Relic Docs
 
 ## PENDENTE
 - Continuar no video2 e depois perguntas/respostas
+
+
+## Dia 12/01/2024
+
+- Continuando o video2.
+
+- Marcações em cinza nos gráficos do APM mostram o momento que ocorreu um deploy. É útil para mapear ofensores de casos onde tenha ocorrido algum impacto.
+
+- Ao analisar um span de um Trace, é possível ver no span ofensor um simbolo como se fosse um relógio, para obter informações valiosas(exemplo: a duração deste span é 25% maior que os demais)
+span = periodo
