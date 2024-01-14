@@ -92,3 +92,41 @@ Querying Log data
 1. Acessar APM
 2. Summary -> Logs
 3. Using query field, find the order you placed in the FoodMe App
+
+
+
+
+
+- Gerando pedido:
+
+        http://foodme.nru.to:8080/#/customer
+<http://foodme.nru.to:8080/#/customer>
+
+
+- Necessário cartão fake:
+visa
+5482078545167852
+06/2024
+994
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1705264690730.
+
+
+- Consegui filtrar utilizando esta query:
+
+~~~~sql
+SELECT `message`,`deliverTo.name`,`items` FROM Log WHERE `entity.guid` = 'MTAzODI4N3xBUE18QVBQTElDQVRJT058MTA0ODY2MjAxMQ' OR `entity.guids` LIKE '%MTAzODI4N3xBUE18QVBQTElDQVRJT058MTA0ODY2MjAxMQ%' OR `service_name` = 'FoodMe + Custom Attributes' OR `serviceName` = 'FoodMe + Custom Attributes' OR `service.name` = 'FoodMe + Custom Attributes' OR `entity.name` = 'FoodMe + Custom Attributes' AND `deliverTo.name` LIKE '%Carlos%' SINCE 30 minutes ago
+~~~~
+
+- Resultado:
+
+~~~~bash
+17:38:10.730
+checkout
+Carlos Santana
+[{"name":"Grilled Chicken","price":4.95,"qty":5},{"name":"Yassa Chicken","price":8.95,"qty":2},{"name":"Yassa Lamb","price":8.25,"qty":2}]
+~~~~
