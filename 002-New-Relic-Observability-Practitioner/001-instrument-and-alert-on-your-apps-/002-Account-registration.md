@@ -89,3 +89,5 @@ https://titanium-water-wind.glitch.me/#/customer
 - Utilizar a conta free mesmo.
 - É interessante criar uma child account, porém só é possível via Pro ou Enterprise, conta free não permite.
 - Cada aplicação consegue usar apenas uma license key.
+- Ter 1 conta no Glitch e 1 no New Relic.
+- Copiar o projeto FoodMe de exemplo para o Glitch.
