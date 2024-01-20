@@ -52,6 +52,12 @@ span = periodo
 
 
 
+
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# QUESTION
+
 ## PERGUNTAS
 A team continues to receive false issue notifications on their system. When they click into the issue tile and review incidents, they realize the set threshold for an alert is too low. Which of the following actions should they proceed with?
 
