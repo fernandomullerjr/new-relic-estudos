@@ -1,0 +1,2 @@
+OBS:
+FACET é igual GROUP BY.

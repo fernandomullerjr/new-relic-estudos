@@ -80,3 +80,132 @@ SELECT percentile(timeToResponseStart, 50) AS 'Back end (Time to first byte)', p
 
 
 Clicar em "Dashboards"
+"Create your first dashboard"
+Create a dashboard
+Dashboard name
+foodme-dashboard
+Permissions
+
+Clicar em "Add chart" ou "Add widget"
+
+~~~~sql
+SELECT count(*) FROM Transaction WHERE appName = 'FoodMe-test'
+~~~~
+
+Basic information
+Chart name
+Total transactions
+Save
+
+
+
+Adicionar outro widget
+
+~~~~sql
+SELECT count(*) FROM PageView FACET appName
+~~~~
+
+Basic information
+Chart name
+Total pageviews
+Chart type
+Pie
+
+
+
+
+Adicionar outro widget
+
+~~~~sql
+SELECT uniqueCount(session) FROM PageView FACET city,countryCode SINCE 1 week ago
+~~~~
+
+OBS:
+FACET é igual GROUP BY.
+
+Since 1 week ago
+
+    Cachoeirinha, BR
+
+Basic information
+Chart name
+Where are our users?
+Chart type
+Bar
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+# ###################################################################################################################### 
+#  Challenge
+
+## Aggregate your data with Average(), Max(), Min(), and Count()
+Slowest transactions for all apps in my account	
+~~~~sql
+SELECT max(duration) FROM Transaction 
+~~~~
+
+Slowest transactions for FoodMe app	
+~~~~sql
+SELECT max(duration) FROM Transaction WHERE appName = 'FoodMe-test' 
+~~~~
+
+
+
+## Group your data with FACET
+Transactions grouped by name	
+~~~~sql
+SELECT count(*) FROM Transaction FACET name
+~~~~
+
+Transactions grouped by HTTP status	
+~~~~sql
+SELECT count(*) FROM Transaction FACET http.statusText
+~~~~
+
+
+
+## Query part of your data with WHERE
+Average duration for a specific app	
+~~~~sql
+SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe-test'
+~~~~
+
+Total number of unsuccessful transactions	
+~~~~sql
+SELECT count(*) FROM Transaction WHERE httpResponseCode != '200'
+~~~~
+
+## Challenges: Can you create these queries on your own?
+**If you get stumped, move on to the next lesson :)  
+The total number of transactions that led to the 404 error	???
+The average transaction time on the FoodMe app	???
+
+
+
+
+
+The total number of transactions that led to the 404 error	???
+
+~~~~sql
+SELECT count(*) FROM Transaction WHERE httpResponseCode = '404'
+~~~~
+
+
+The average transaction time on the FoodMe app	???
+
+~~~~sql
+SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe-test'
+~~~~
