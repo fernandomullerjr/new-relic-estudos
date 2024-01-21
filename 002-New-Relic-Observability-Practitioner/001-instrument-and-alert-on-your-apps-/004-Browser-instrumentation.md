@@ -22,7 +22,8 @@ git status
 Video Notes and URLs
 
     Please note: some ad-blockers and privacy browsers may impact your ability to query and view browser agent data. We recommend using Google Chrome for this lesson.
-        For more information on ad-blockers as it relates to browser monitoring, see this doc(opens in a new tab).(opens in a new tab)(opens in a new tab)
+        For more information on ad-blockers as it relates to browser monitoring, see this doc(opens in a new tab).(opens in a new tab)(opens in a new tab) , 
+<https://docs.newrelic.com/docs/browser/new-relic-browser/getting-started/compatibility-requirements-browser-monitoring/>
 
 
 
