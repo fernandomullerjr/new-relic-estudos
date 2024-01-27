@@ -215,3 +215,52 @@ Your order ID is 1706397819206.
 
 - Browser/SPA NRQL query examples:
 <https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/nrql-query-tutorials/browserspa-nrql-query-examples/>
+
+- NRQL reference:
+<https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/get-started/nrql-syntax-clauses-functions/>
+
+
+
+
+- Adicionar demais widgets no Dashboard, antes de prosseguir.
+nrql para trazer "transactions grouped by name"
+SELECT count(*) FROM Transaction FACET name
+
+
+
+Added to your dashboard
+View this on foodme-dashboard / foodme-dashboard
+<https://one.newrelic.com/dashboards/detail/NDMwMTY1NnxWSVp8REFTSEJPQVJEfGRhOjUxMzAwNzQ?state=5bcfe257-e3a0-cc1c-3768-66d175cdc5a5>
+
+
+
+
+Total number of unsuccessful transactions	
+~~~~sql
+SELECT count(*) FROM Transaction WHERE httpResponseCode != '200'
+~~~~
+
+
+
+Average duration for a specific app	
+~~~~sql
+SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe-test'
+~~~~
+
+
+
+Transactions grouped by HTTP status	
+~~~~sql
+SELECT count(*) FROM Transaction FACET http.statusText
+~~~~
+
+
+
+- Ajustando o Widget "Total number of unsuccessful transactions", pois os OK estão batendo código 225, então ajustei para que transação ÑOK seja 400 ou acima:
+
+~~~~sql
+SELECT count(*) FROM Transaction WHERE httpResponseCode >= '400'
+~~~~
+
+- Atualizado widget e dashboard:
+<https://one.newrelic.com/dashboards/detail/NDMwMTY1NnxWSVp8REFTSEJPQVJEfGRhOjUxMzAwNzQ?state=8ad77a1d-b167-ed5f-9679-c849e86d8cad>

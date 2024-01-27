@@ -1,0 +1,1 @@
+SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe-test'
