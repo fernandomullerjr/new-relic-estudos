@@ -30,14 +30,16 @@ Video Notes and URLs
 
 
 
-Acessar "Query your data"
+## Atributos
+
+- Acessar "Query your data"
 SELECT count(*) FROM Transaction FACET restaurant
 Isto não retorna nada, porque não temos este atributo para poder consultar por restaurante.
 
-Acessar o Glitch
+- Acessar o Glitch
 pasta server/
 arquivo index.js
-https://glitch.com/edit/#!/titanium-water-wind?path=server%2Findex.js%3A1%3A0
+<https://glitch.com/edit/#!/titanium-water-wind?path=server%2Findex.js%3A1%3A0>
 
 Arquivo disponivel na pagina da aula.
 Porém o código já está inserido, basta descomentar as linhas 64 e 78
@@ -64,3 +66,29 @@ Porém o código já está inserido, basta descomentar as linhas 64 e 78
 
 
 video -6:02
+
+## Dia 26/01/2024
+
+- Fazer um pedido, para validar
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1706315741415.
+
+
+
+
+- Acessar "Query your data", tentar fazer a mesma query novamente:
+SELECT count(*) FROM Transaction FACET restaurant
+
+
+- Código que também funciona, traz o valor total por ordem:
+SELECT count(*) FROM Transaction FACET orderTotal
+
+
+
+
+
+Agora vamos editar a parte relacionada ao browser.
