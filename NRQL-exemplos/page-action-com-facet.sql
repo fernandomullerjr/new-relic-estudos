@@ -1,0 +1,1 @@
+SELECT count(*) FROM PageAction WHERE appName = 'FoodMe-Browser' FACET restaurant,item,qty

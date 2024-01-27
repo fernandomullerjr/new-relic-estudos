@@ -182,3 +182,36 @@ https://one.newrelic.com/dashboards/detail/NDMwMTY1NnxWSVp8REFTSEJPQVJEfGRhOjUxM
 
 ## PENDENTE
 - Adicionar demais widgets no Dashboard, antes de prosseguir.
+
+
+
+
+
+
+
+
+## Dia 27/01/2024
+- Adicionar demais widgets no Dashboard, antes de prosseguir.
+
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1706397800922.
+
+
+
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1706397819206.
+
+
+- App data NRQL query examples:
+<https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/nrql-query-tutorials/app-data-nrql-query-examples/>
+
+- Browser/SPA NRQL query examples:
+<https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/nrql-query-tutorials/browserspa-nrql-query-examples/>
