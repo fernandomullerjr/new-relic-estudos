@@ -150,3 +150,35 @@ SELECT count(*) FROM PageAction
 
 agora retorna
 6 Page Actions
+
+
+
+
+
+- Acessar "Query your data", efetuar esta query mais avançada:
+SELECT count(*) FROM PageAction WHERE appName = 'FoodMe-Browser' FACET restaurant,item,qty
+
+
+Since 1 hour ago
+Esther's German SaloonBockwurst Würstchen11
+Esther's German SaloonUngarische Gulaschsuppe mit Brötchen11
+Esther's German SaloonWienerschnitzel11
+Esther's German SaloonWurstsalad mit Bauernbrot11
+Le Bateau Rougefrites aïoli 11
+Le Bateau Rougemoules et frites11
+
+
+
+most popular items
+
+add to dashboard
+
+foodme-dashboard / foodme-dashboard
+Account 4301656
+
+
+https://one.newrelic.com/dashboards/detail/NDMwMTY1NnxWSVp8REFTSEJPQVJEfGRhOjUxMzAwNzQ?state=5bcfe257-e3a0-cc1c-3768-66d175cdc5a5
+
+
+## PENDENTE
+- Adicionar demais widgets no Dashboard, antes de prosseguir.
