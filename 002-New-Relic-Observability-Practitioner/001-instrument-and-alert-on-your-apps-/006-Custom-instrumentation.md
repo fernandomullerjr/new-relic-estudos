@@ -92,3 +92,61 @@ SELECT count(*) FROM Transaction FACET orderTotal
 
 
 Agora vamos editar a parte relacionada ao browser.
+
+- Acessar o Glitch
+Ir na pasta app/
+js/
+services/
+cart.js
+<https://glitch.com/edit/#!/titanium-water-wind?path=app%2Fjs%2Fservices%2Fcart.js%3A1%3A0>
+
+Editar o código
+descomentar a linha 61
+descomentar a linha 70 também
+
+
+
+
+- Após o ajuste, efetuar pedidos de teste.
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1706316979081.
+
+
+
+Thank you for your order!
+
+Our chefs are getting your food ready. It will be on its way shortly.
+
+Your order ID is 1706317003912.
+
+
+
+
+
+
+- Acessar "Query your data", tentar esta query:
+SELECT count(*) FROM PageAction
+
+não retornou nada
+parece ser um problema com a configuração do cart.js, newrelic.js e o 
+
+
+- Resolvido.
+- Foi necessário acessar a parte de "+ add data"
+ir em "Browser monitoring"
+Adicionar uma aplicação para instrumentar a parte de browser
+"Choose your instrumentation method"
+Escolher esta opção:
+"Connect browser data to an application's APM data
+Choose this method if you've already instrumented your application with APM."
+
+
+- Acessar "Query your data", tentar esta query:
+SELECT count(*) FROM PageAction
+
+agora retorna
+6 Page Actions
