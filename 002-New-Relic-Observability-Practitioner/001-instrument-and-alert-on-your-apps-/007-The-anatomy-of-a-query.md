@@ -124,7 +124,11 @@ SELECT function(attribute) [AS 'label'][, ...]
 ## Dia 28/01/2024
 
 - Adicionar query do video ao dashboard.
+Quantidade total de PageViews por país e cidade
+
+~~~~sql
 SELECT count(*) FROM PageView WHERE appName = 'FoodMe-Browser' FACET countryCode,city SINCE 1 week ago
+~~~~
 
 Added to your dashboard
 View this on foodme-dashboard / foodme-dashboard
