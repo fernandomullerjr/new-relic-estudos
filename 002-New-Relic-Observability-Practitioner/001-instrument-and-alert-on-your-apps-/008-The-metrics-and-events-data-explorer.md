@@ -42,6 +42,10 @@ Your order ID is 1706479657608.
 
 
 
+- Dentro do "Data explorer", temos 3 etapas para escolher:
+Event
+Plot
+Dimension
 
 - Para acessar o "Data explorer", é uma aba disponível dentro do "Query Your Data".
 Selecionar "Events"
@@ -70,5 +74,28 @@ Your order ID is 1706479657608.
 
 
 
-## LAB
+## LAB - DATA EXPLORER
 
+1. Criar queries e adicionar ao Dashboard as preferidas.
+Event Type: Transaction
+Plot "count(*)"
+Dimension: Name
+
+Event Type: Transaction
+Plot "Duration Max"
+Dimension: Name
+
+Event Type: PageView
+Plot "Duration Max"
+Dimension: PageURL
+
+
+Duração máxima das transações
+SELECT max(duration) FROM Transaction FACET name SINCE 55 MINUTES AGO TIMESERIES
+
+Duração máxima do PageView
+SELECT max(duration) FROM PageView FACET pageUrl SINCE 55 MINUTES AGO TIMESERIES
+
+
+2. Explorar os atributos do PageView, usando o "RAW Data".
+Quais informações você consegue ver agora que não via antes?
