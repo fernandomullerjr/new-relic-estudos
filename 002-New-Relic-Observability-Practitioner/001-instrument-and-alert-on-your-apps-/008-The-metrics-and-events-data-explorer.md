@@ -91,13 +91,22 @@ Dimension: PageURL
 
 
 Duração máxima das transações
+
+~~~~sql
 SELECT max(duration) FROM Transaction FACET name SINCE 55 MINUTES AGO TIMESERIES
+~~~~
 
 Duração máxima do PageView
+
+~~~~sql
 SELECT max(duration) FROM PageView FACET pageUrl SINCE 55 MINUTES AGO TIMESERIES
+~~~~
+
 
 Added to your dashboard
 View this on foodme-dashboard / foodme-dashboard
+
+
 
 
 2. Explorar os atributos do PageView, usando o "RAW Data".
@@ -256,3 +265,10 @@ NDMwMTY1NnxCUk9XU0VSfEFQUExJQ0FUSU9OfDExMDMzMDU1MTY
 January 27, 2024 20:22:04
 
 ~~~~
+
+
+
+3. Mover o mouse para a query NRQL que foi criada.
+Clicar em "Edit in Query builder"
+Change time period, eg: SINCE 1 day ago
+Change the FACET
